@@ -14,6 +14,16 @@
 const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 
+glm::mat4 view = glm::mat4(1.0f);
+glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+                                        (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
+                                        0.1f,
+                                        100.0f);
+
+void drawBox(float x, float y, float z) {
+  
+}
+
 int main(int argc, char* args[]) {
   SDL_Window* window = NULL;
 
@@ -100,8 +110,8 @@ int main(int argc, char* args[]) {
 
   float planeVertices[] = {
       // positions          // texture coords
-        0.5f,  0.5f, 0.0f,   1.0f, 1.0f, // top right
-        0.5f, -0.5f, 0.0f,   1.0f, 0.0f, // bottom right
+       0.5f,  0.5f, 0.0f,   1.0f, 1.0f, // top right
+       0.5f, -0.5f, 0.0f,   1.0f, 0.0f, // bottom right
       -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, // bottom left
       -0.5f,  0.5f, 0.0f,   0.0f, 1.0f  // top left
   };
@@ -112,7 +122,6 @@ int main(int argc, char* args[]) {
   };
 
   unsigned int VBOPlane, VAOPlane, EBOPlane;
-
   glGenVertexArrays(1, &VAOPlane);
   glBindVertexArray(VAOPlane);
 
@@ -134,12 +143,13 @@ int main(int argc, char* args[]) {
   ///
 
   unsigned int VBOBox, VAOBox;
+  glGenVertexArrays(1, &VAOBox);
+  glBindVertexArray(VAOBox);
+
   glGenBuffers(1, &VBOBox);
   glBindBuffer(GL_ARRAY_BUFFER, VBOBox);
   glBufferData(GL_ARRAY_BUFFER, sizeof(boxVertices), boxVertices, GL_STATIC_DRAW);
 
-  glGenVertexArrays(1, &VAOBox);
-  glBindVertexArray(VAOBox);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
 
@@ -245,17 +255,9 @@ int main(int argc, char* args[]) {
     // activate shader
     ourShader.use();
 
-    // create transformations
     glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection = glm::mat4(1.0f);
-    model      = glm::rotate(model, glm::radians(rotationValue), glm::vec3(1.0f, 0.0f, 0.0f));
-    view       = glm::translate(view, glm::vec3(0.0f, 0.0f, mixValue));
-    projection = glm::perspective(glm::radians(45.0f),
-                                  (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
-                                  0.1f,
-                                  100.0f);
-
+    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, mixValue));
+    view = glm::rotate(view, glm::radians(rotationValue), glm::vec3(1.0f, 0.0f, 0.0f));
     ourShader.setMat4("model", model);
     ourShader.setMat4("view",  view);
     ourShader.setMat4("projection", projection);
