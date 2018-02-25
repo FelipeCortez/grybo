@@ -2,6 +2,7 @@
 #include <GL/gl3w.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <math.h>
 #include "shader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -11,17 +12,34 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+double rangeMap(double input, double inputStart, double inputEnd, double outputStart, double outputEnd) {
+  double slope = (outputEnd - outputStart) / (inputEnd - inputStart);
+  return outputStart + (slope * (input - inputStart));
+}
+
 const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 
-glm::mat4 view = glm::mat4(1.0f);
-glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-                                        (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
-                                        0.1f,
-                                        100.0f);
+void drawBox(Shader ourShader, unsigned int VAOBox, unsigned int VBOBox, glm::vec3 pos, float scale) {
+  glm::mat4 model(1.0f);
+  model = glm::scale(model, glm::vec3(scale));
+  model = glm::translate(model, pos);
+  ourShader.setMat4("model", model);
 
-void drawBox(float x, float y, float z) {
-  
+  glBindVertexArray(VAOBox);
+  glBindBuffer(GL_ARRAY_BUFFER, VBOBox);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void drawPlane(Shader ourShader, unsigned int VAOPlane, unsigned int VBOPlane, int pos) {
+  glm::mat4 model(1.0f);
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos));
+  model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+  ourShader.setMat4("model", model);
+
+  glBindVertexArray(VAOPlane);
+  glBindBuffer(GL_ARRAY_BUFFER, VBOPlane);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 int main(int argc, char* args[]) {
@@ -58,6 +76,12 @@ int main(int argc, char* args[]) {
     fprintf(stderr, "OpenGL 3.4 not supported\n");
     return 1;
   }
+
+  glm::mat4 view = glm::mat4(1.0f);
+  glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+                                          (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
+                                          0.1f,
+                                          100.0f);
 
   glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   glEnable(GL_DEPTH_TEST);
@@ -109,11 +133,10 @@ int main(int argc, char* args[]) {
     };
 
   float planeVertices[] = {
-      // positions          // texture coords
-       0.5f,  0.5f, 0.0f,   1.0f, 1.0f, // top right
-       0.5f, -0.5f, 0.0f,   1.0f, 0.0f, // bottom right
-      -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, // bottom left
-      -0.5f,  0.5f, 0.0f,   0.0f, 1.0f  // top left
+       0.5f,  0.5f, 0.0f, 1.0f, 1.0f, // top right
+       0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
+      -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
+      -0.5f,  0.5f, 0.0f, 0.0f, 1.0f  // top left
   };
 
   unsigned int indices[] = {
@@ -213,7 +236,7 @@ int main(int argc, char* args[]) {
   const Uint8* keys = NULL;
   keys = SDL_GetKeyboardState(NULL);
   float mixValue = -2.5;
-  float rotationValue = -45.0f;
+  float rotationValue = 0.0f;
 
   while(!quit) {
     pastTime = time;
@@ -255,24 +278,24 @@ int main(int argc, char* args[]) {
     // activate shader
     ourShader.use();
 
-    glm::mat4 model = glm::mat4(1.0f);
-    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, mixValue));
-    view = glm::rotate(view, glm::radians(rotationValue), glm::vec3(1.0f, 0.0f, 0.0f));
-    ourShader.setMat4("model", model);
+    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.8f, mixValue));
+
     ourShader.setMat4("view",  view);
     ourShader.setMat4("projection", projection);
 
-    // render container
-    glBindVertexArray(VAOPlane);
-    glBindBuffer(GL_ARRAY_BUFFER, VBOPlane);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    int i;
+    for (i = 0; i < 5; ++i) {
+      drawPlane(ourShader, VAOPlane, VBOPlane, i);
+    }
 
-    model = glm::scale(glm::mat4(1.0f), glm::vec3(0.20f));
-    ourShader.setMat4("model", model);
+    const unsigned int notes = 5;
 
-    glBindVertexArray(VAOBox);
-    glBindBuffer(GL_ARRAY_BUFFER, VBOBox);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    for (i = 0; i < notes; ++i) {
+      float xPos = rangeMap(i,
+                            0.0f, notes - 1,
+                            -4.5f, 4.5f);
+      drawBox(ourShader, VAOBox, VBOBox, glm::vec3(xPos, 0.5f, 0), 0.10);
+    }
 
     std::cout << mixValue << " | " << rotationValue << std::endl;
 
