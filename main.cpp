@@ -19,6 +19,8 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
 
 const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
+const float SCROLL_SPEED = 3.0f;
+const unsigned int NOTES = 5;
 
 void drawBox(Shader ourShader, unsigned int VAOBox, unsigned int VBOBox, glm::vec3 pos, float scale) {
   glm::mat4 model(1.0f);
@@ -235,8 +237,20 @@ int main(int argc, char* args[]) {
 
   const Uint8* keys = NULL;
   keys = SDL_GetKeyboardState(NULL);
-  float mixValue = -2.5;
+
+  // game stuff
+
+  float sidesValue = -2.5;
   float rotationValue = 0.0f;
+  float cameraZ = -5.0f;
+
+  int i;
+  float notePositions[NOTES] = {0};
+
+  for (i = 0; i < NOTES; ++i) {
+    notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -4.5f, 4.5f);
+  }
+
 
   while(!quit) {
     pastTime = time;
@@ -247,10 +261,10 @@ int main(int argc, char* args[]) {
       if (e.type == SDL_KEYDOWN) {
         switch(e.key.keysym.sym) {
         case SDLK_UP:
-          mixValue += 0.1f;
+          sidesValue += 0.1f;
           break;
         case SDLK_DOWN:
-          mixValue -= 0.1f;
+          sidesValue -= 0.1f;
           break;
         case SDLK_LEFT:
           rotationValue -= 3.0f;
@@ -266,6 +280,8 @@ int main(int argc, char* args[]) {
       }
     }
 
+    cameraZ += SCROLL_SPEED * dt;
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -278,26 +294,19 @@ int main(int argc, char* args[]) {
     // activate shader
     ourShader.use();
 
-    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.8f, mixValue));
+    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.8f, cameraZ));
 
     ourShader.setMat4("view",  view);
     ourShader.setMat4("projection", projection);
 
-    int i;
-    for (i = 0; i < 5; ++i) {
+    for (i = 0; i < 1000; ++i) {
       drawPlane(ourShader, VAOPlane, VBOPlane, i);
     }
 
-    const unsigned int notes = 5;
+    drawBox(ourShader, VAOBox, VBOBox, glm::vec3(notePositions[2], 0.5f, 0), 0.10);
 
-    for (i = 0; i < notes; ++i) {
-      float xPos = rangeMap(i,
-                            0.0f, notes - 1,
-                            -4.5f, 4.5f);
-      drawBox(ourShader, VAOBox, VBOBox, glm::vec3(xPos, 0.5f, 0), 0.10);
-    }
-
-    std::cout << mixValue << " | " << rotationValue << std::endl;
+    //std::cout << sidesValue << " | " << rotationValue << std::endl;
+    //std::cout << dt << std::endl;
 
     SDL_GL_SwapWindow(window);
   }
