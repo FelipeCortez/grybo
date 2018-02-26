@@ -3,7 +3,9 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <math.h>
+#include <random>
 #include "shader.h"
+#include "shapes.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -22,27 +24,16 @@ const unsigned int SCREEN_HEIGHT = 600;
 const float SCROLL_SPEED = 3.0f;
 const unsigned int NOTES = 5;
 
-void drawBox(Shader ourShader, unsigned int VAOBox, unsigned int VBOBox, glm::vec3 pos, float scale) {
-  glm::mat4 model(1.0f);
-  model = glm::scale(model, glm::vec3(scale));
-  model = glm::translate(model, pos);
-  ourShader.setMat4("model", model);
+std::default_random_engine generator;
+std::uniform_int_distribution<int> noteDistribution(0, NOTES);
+std::uniform_int_distribution<int> posDistribution(0, 1000);
+auto getRandomNote = std::bind(noteDistribution, generator);
+auto getRandomPos = std::bind(posDistribution, generator);
 
-  glBindVertexArray(VAOBox);
-  glBindBuffer(GL_ARRAY_BUFFER, VBOBox);
-  glDrawArrays(GL_TRIANGLES, 0, 36);
-}
-
-void drawPlane(Shader ourShader, unsigned int VAOPlane, unsigned int VBOPlane, int pos) {
-  glm::mat4 model(1.0f);
-  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos));
-  model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-  ourShader.setMat4("model", model);
-
-  glBindVertexArray(VAOPlane);
-  glBindBuffer(GL_ARRAY_BUFFER, VBOPlane);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
+typedef struct Note {
+  int which;
+  float posZ;
+} Note;
 
 int main(int argc, char* args[]) {
   SDL_Window* window = NULL;
@@ -79,6 +70,9 @@ int main(int argc, char* args[]) {
     return 1;
   }
 
+  BoxShape boxShape = initBox();
+  PlaneShape planeShape = initPlane();
+
   glm::mat4 view = glm::mat4(1.0f);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f),
                                           (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
@@ -88,100 +82,7 @@ int main(int argc, char* args[]) {
   glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   glEnable(GL_DEPTH_TEST);
 
-  Shader ourShader("1.vert", "1.frag");
-
-  float boxVertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    };
-
-  float planeVertices[] = {
-       0.5f,  0.5f, 0.0f, 1.0f, 1.0f, // top right
-       0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
-      -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
-      -0.5f,  0.5f, 0.0f, 0.0f, 1.0f  // top left
-  };
-
-  unsigned int indices[] = {
-      0, 1, 3, // first triangle
-      1, 2, 3  // second triangle
-  };
-
-  unsigned int VBOPlane, VAOPlane, EBOPlane;
-  glGenVertexArrays(1, &VAOPlane);
-  glBindVertexArray(VAOPlane);
-
-  glGenBuffers(1, &VBOPlane);
-  glGenBuffers(1, &EBOPlane);
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBOPlane);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOPlane);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
-  ///
-
-  unsigned int VBOBox, VAOBox;
-  glGenVertexArrays(1, &VAOBox);
-  glBindVertexArray(VAOBox);
-
-  glGenBuffers(1, &VBOBox);
-  glBindBuffer(GL_ARRAY_BUFFER, VBOBox);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(boxVertices), boxVertices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
-  ///
+  Shader ourShader("assets/1.vert", "assets/1.frag");
 
   int width, height, nrChannels;
   unsigned int measureThickTexture, measureThinTexture;
@@ -194,7 +95,7 @@ int main(int argc, char* args[]) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   stbi_set_flip_vertically_on_load(true);
-  unsigned char* data = stbi_load("measure-thick.png", &width, &height, &nrChannels, 0);
+  unsigned char* data = stbi_load("assets/measure-thick.png", &width, &height, &nrChannels, 0);
 
   if (data) {
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -211,7 +112,7 @@ int main(int argc, char* args[]) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  data = stbi_load("measure-thin.png", &width, &height, &nrChannels, 0);
+  data = stbi_load("assets/measure-thin.png", &width, &height, &nrChannels, 0);
 
   if (data) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -240,17 +141,22 @@ int main(int argc, char* args[]) {
 
   // game stuff
 
-  float sidesValue = -2.5;
-  float rotationValue = 0.0f;
+  float upDownValue = -0.7;
+  float sidesValue = 15;
   float cameraZ = -5.0f;
 
   int i;
+
+  Note randomNotes[1000];
   float notePositions[NOTES] = {0};
 
   for (i = 0; i < NOTES; ++i) {
-    notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -4.5f, 4.5f);
+    notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -4.0f, 4.0f);
   }
 
+  for (i = 0; i < 1000; ++i) {
+    randomNotes[i] = { getRandomNote(), (float)getRandomPos() * 5.0f };
+  }
 
   while(!quit) {
     pastTime = time;
@@ -261,16 +167,16 @@ int main(int argc, char* args[]) {
       if (e.type == SDL_KEYDOWN) {
         switch(e.key.keysym.sym) {
         case SDLK_UP:
-          sidesValue += 0.1f;
+          upDownValue += 0.1f;
           break;
         case SDLK_DOWN:
-          sidesValue -= 0.1f;
+          upDownValue -= 0.1f;
           break;
         case SDLK_LEFT:
-          rotationValue -= 3.0f;
+          sidesValue -= 0.5f;
           break;
         case SDLK_RIGHT:
-          rotationValue += 3.0f;
+          sidesValue += 0.5f;
           break;
         default:
           break;
@@ -285,7 +191,6 @@ int main(int argc, char* args[]) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, measureThickTexture);
     glActiveTexture(GL_TEXTURE1);
@@ -294,28 +199,36 @@ int main(int argc, char* args[]) {
     // activate shader
     ourShader.use();
 
-    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.8f, cameraZ));
+    //model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    view = glm::mat4(1.0f);
+    view = glm::rotate(view, glm::radians(sidesValue), glm::vec3(1.0f, 0.0f, 0.0f));
+    view = glm::translate(view, glm::vec3(0.0f, upDownValue, cameraZ));
 
     ourShader.setMat4("view",  view);
     ourShader.setMat4("projection", projection);
 
     for (i = 0; i < 1000; ++i) {
-      drawPlane(ourShader, VAOPlane, VBOPlane, i);
+      drawPlane(ourShader, planeShape, i, (i % 4) == 0);
     }
 
-    drawBox(ourShader, VAOBox, VBOBox, glm::vec3(notePositions[2], 0.5f, 0), 0.10);
+    for (i = 0; i < 1000; ++i) {
+      drawBox(ourShader, boxShape, glm::vec3(notePositions[randomNotes[i].which], 0.5f, -randomNotes[i].posZ), 0.10);
+    }
 
-    //std::cout << sidesValue << " | " << rotationValue << std::endl;
+    std::cout << sidesValue << " | " << upDownValue << std::endl;
     //std::cout << dt << std::endl;
 
     SDL_GL_SwapWindow(window);
   }
 
+  /*
   glDeleteVertexArrays(1, &VAOPlane);
   glDeleteBuffers(1, &VBOPlane);
   glDeleteBuffers(1, &EBOPlane);
+
   glDeleteVertexArrays(1, &VAOBox);
   glDeleteBuffers(1, &VBOBox);
+  */
 
   SDL_GL_DeleteContext(glContext);
   SDL_DestroyWindow(window);
