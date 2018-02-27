@@ -4,13 +4,12 @@
 namespace glm
 {
 	// pow
-	GLM_FUNC_QUALIFIER int pow(int x, uint y)
+	GLM_FUNC_QUALIFIER int pow(int x, int y)
 	{
 		if(y == 0)
-			return x >= 0 ? 1 : -1;
-
+			return 1;
 		int result = x;
-		for(uint i = 1; i < y; ++i)
+		for(int i = 1; i < y; ++i)
 			result *= x;
 		return result;
 	}
@@ -70,8 +69,8 @@ namespace detail
 	}
 
 	// factorial (!12 max, integer only)
-	template<typename genType>
-	GLM_FUNC_QUALIFIER genType factorial(genType const& x)
+	template <typename genType>
+	GLM_FUNC_QUALIFIER genType factorial(genType const & x)
 	{
 		genType Temp = x;
 		genType Result;
@@ -80,30 +79,30 @@ namespace detail
 		return Result;
 	}
 
-	template<typename T, qualifier Q>
-	GLM_FUNC_QUALIFIER vec<2, T, Q> factorial(
-		vec<2, T, Q> const& x)
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tvec2<T, P> factorial(
+		tvec2<T, P> const & x)
 	{
-		return vec<2, T, Q>(
+		return tvec2<T, P>(
 			factorial(x.x),
 			factorial(x.y));
 	}
 
-	template<typename T, qualifier Q>
-	GLM_FUNC_QUALIFIER vec<3, T, Q> factorial(
-		vec<3, T, Q> const& x)
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tvec3<T, P> factorial(
+		tvec3<T, P> const & x)
 	{
-		return vec<3, T, Q>(
+		return tvec3<T, P>(
 			factorial(x.x),
 			factorial(x.y),
 			factorial(x.z));
 	}
 
-	template<typename T, qualifier Q>
-	GLM_FUNC_QUALIFIER vec<4, T, Q> factorial(
-		vec<4, T, Q> const& x)
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tvec4<T, P> factorial(
+		tvec4<T, P> const & x)
 	{
-		return vec<4, T, Q>(
+		return tvec4<T, P>(
 			factorial(x.x),
 			factorial(x.y),
 			factorial(x.z),
@@ -112,9 +111,6 @@ namespace detail
 
 	GLM_FUNC_QUALIFIER uint pow(uint x, uint y)
 	{
-		if (y == 0)
-			return 1u;
-
 		uint result = x;
 		for(uint i = 1; i < y; ++i)
 			result *= x;

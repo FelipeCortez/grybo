@@ -6,6 +6,7 @@
 #include <random>
 #include "shader.h"
 #include "shapes.h"
+#include "model.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -21,7 +22,9 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
 
 const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
-const float SCROLL_SPEED = 3.0f;
+const float SIDES_INCREMENT = 0.005f;
+const float UPDOWN_INCREMENT = 0.005f;
+const float SCROLL_SPEED = 5.0f;
 const unsigned int NOTES = 5;
 
 std::default_random_engine generator;
@@ -70,7 +73,6 @@ int main(int argc, char* args[]) {
     return 1;
   }
 
-  BoxShape boxShape = initBox();
   PlaneShape planeShape = initPlane();
 
   glm::mat4 view = glm::mat4(1.0f);
@@ -82,7 +84,8 @@ int main(int argc, char* args[]) {
   glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   glEnable(GL_DEPTH_TEST);
 
-  Shader ourShader("assets/1.vert", "assets/1.frag");
+  Model ourModel("assets/note.obj");
+  //Model ourModel("assets/nanosuit/nanosuit.obj");
 
   int width, height, nrChannels;
   unsigned int measureThickTexture, measureThinTexture;
@@ -123,8 +126,11 @@ int main(int argc, char* args[]) {
 
   stbi_image_free(data);
 
+  Shader ourShader("assets/1.vert", "assets/1.frag");
   ourShader.use();
   ourShader.setInt("texture2d", 0);
+
+  Shader modelShader("assets/model.vert", "assets/model.frag");
 
   SDL_Event e;
 
@@ -141,9 +147,10 @@ int main(int argc, char* args[]) {
 
   // game stuff
 
-  float upDownValue = -0.7;
-  float sidesValue = 15;
-  float cameraZ = -5.0f;
+  float upDownValue = 0.0f;
+  float sidesValue = 0.0f;
+  float cameraZ = -3.0f;
+  //float cameraZ = -10.0f;
 
   int i;
 
@@ -151,11 +158,11 @@ int main(int argc, char* args[]) {
   float notePositions[NOTES] = {0};
 
   for (i = 0; i < NOTES; ++i) {
-    notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -4.0f, 4.0f);
+    notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -0.37f, 0.37f);
   }
 
   for (i = 0; i < 1000; ++i) {
-    randomNotes[i] = { getRandomNote(), (float)getRandomPos() * 5.0f };
+    randomNotes[i] = { getRandomNote(), (float)getRandomPos() * 0.5f };
   }
 
   while(!quit) {
@@ -167,16 +174,16 @@ int main(int argc, char* args[]) {
       if (e.type == SDL_KEYDOWN) {
         switch(e.key.keysym.sym) {
         case SDLK_UP:
-          upDownValue += 0.1f;
+          upDownValue += UPDOWN_INCREMENT;
           break;
         case SDLK_DOWN:
-          upDownValue -= 0.1f;
+          upDownValue -= UPDOWN_INCREMENT;
           break;
         case SDLK_LEFT:
-          sidesValue -= 0.5f;
+          sidesValue -= SIDES_INCREMENT;
           break;
         case SDLK_RIGHT:
-          sidesValue += 0.5f;
+          sidesValue += SIDES_INCREMENT;
           break;
         default:
           break;
@@ -196,13 +203,11 @@ int main(int argc, char* args[]) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, measureThinTexture);
 
-    // activate shader
     ourShader.use();
 
-    //model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::mat4(1.0f);
-    view = glm::rotate(view, glm::radians(sidesValue), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::translate(view, glm::vec3(0.0f, upDownValue, cameraZ));
+    view = glm::mat4();
+    view = glm::rotate(view, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    view = glm::translate(view, glm::vec3(0.0f, -0.7f, cameraZ));
 
     ourShader.setMat4("view",  view);
     ourShader.setMat4("projection", projection);
@@ -211,8 +216,20 @@ int main(int argc, char* args[]) {
       drawPlane(ourShader, planeShape, i, (i % 4) == 0);
     }
 
+    modelShader.use();
+    modelShader.setMat4("view",  view);
+    modelShader.setMat4("projection", projection);
+
+    const float scaleFactor = 0.08f + upDownValue;
     for (i = 0; i < 1000; ++i) {
-      drawBox(ourShader, boxShape, glm::vec3(notePositions[randomNotes[i].which], 0.5f, -randomNotes[i].posZ), 0.10);
+      glm::mat4 model(1.0f);
+      model = glm::translate(model, glm::vec3(notePositions[randomNotes[i].which],
+                                              0.0f,
+                                              -randomNotes[i].posZ));
+      model = glm::scale(model, glm::vec3(scaleFactor));
+      model = glm::translate(model, glm::vec3(0.0f, 0.26f, 0.0f));
+      modelShader.setMat4("model", model);
+      ourModel.Draw(modelShader);
     }
 
     std::cout << sidesValue << " | " << upDownValue << std::endl;

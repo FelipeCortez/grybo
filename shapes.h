@@ -129,7 +129,7 @@ PlaneShape initPlane() {
 
 void drawPlane(Shader ourShader, PlaneShape planeShape, int pos, bool thick) {
   glm::mat4 model(1.0f);
-  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos));
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos - 0.5f));
   model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
   if (thick) {
@@ -137,7 +137,6 @@ void drawPlane(Shader ourShader, PlaneShape planeShape, int pos, bool thick) {
   } else {
     ourShader.setInt("texture2d", 1);
   }
-
   ourShader.setMat4("model", model);
 
   glBindVertexArray(planeShape.VAOPlane);

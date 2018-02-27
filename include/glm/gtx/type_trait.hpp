@@ -6,15 +6,11 @@
 /// @defgroup gtx_type_trait GLM_GTX_type_trait
 /// @ingroup gtx
 ///
-/// Include <glm/gtx/type_trait.hpp> to use the features of this extension.
+/// @brief Defines traits for each type.
 ///
-/// Defines traits for each type.
+/// <glm/gtx/type_trait.hpp> need to be included to use these functionalities.
 
 #pragma once
-
-#ifndef GLM_ENABLE_EXPERIMENTAL
-#	error "GLM: GLM_GTX_type_trait is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it."
-#endif
 
 // Dependency:
 #include "../detail/type_vec2.hpp"
@@ -41,7 +37,7 @@ namespace glm
 	/// @addtogroup gtx_type_trait
 	/// @{
 
-	template<typename T>
+	template <template <typename, precision> class genType, typename T, precision P>
 	struct type
 	{
 		static bool const is_vec = false;
@@ -52,20 +48,56 @@ namespace glm
 		static length_t const rows = 0;
 	};
 
-	template<length_t L, typename T, qualifier Q>
-	struct type<vec<L, T, Q> >
+	template <typename T, precision P>
+	struct type<tvec1, T, P>
 	{
 		static bool const is_vec = true;
 		static bool const is_mat = false;
 		static bool const is_quat = false;
 		enum
 		{
-			components = L
+			components = 1
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<2, 2, T, Q> >
+	template <typename T, precision P>
+	struct type<tvec2, T, P>
+	{
+		static bool const is_vec = true;
+		static bool const is_mat = false;
+		static bool const is_quat = false;
+		enum
+		{
+			components = 2
+		};
+	};
+
+	template <typename T, precision P>
+	struct type<tvec3, T, P>
+	{
+		static bool const is_vec = true;
+		static bool const is_mat = false;
+		static bool const is_quat = false;
+		enum
+		{
+			components = 3
+		};
+	};
+
+	template <typename T, precision P>
+	struct type<tvec4, T, P>
+	{
+		static bool const is_vec = true;
+		static bool const is_mat = false;
+		static bool const is_quat = false;
+		enum
+		{
+			components = 4
+		};
+	};
+
+	template <typename T, precision P>
+	struct type<tmat2x2, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -78,8 +110,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<2, 3, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat2x3, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -92,8 +124,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<2, 4, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat2x4, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -106,8 +138,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<3, 2, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat3x2, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -120,8 +152,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<3, 3, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat3x3, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -134,8 +166,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<3, 4, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat3x4, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -148,8 +180,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<4, 2, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat4x2, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -162,8 +194,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<4, 3, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat4x3, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -176,8 +208,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<mat<4, 4, T, Q> >
+	template <typename T, precision P>
+	struct type<tmat4x4, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = true;
@@ -190,8 +222,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<tquat<T, Q> >
+	template <typename T, precision P>
+	struct type<tquat, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = false;
@@ -202,8 +234,8 @@ namespace glm
 		};
 	};
 
-	template<typename T, qualifier Q>
-	struct type<tdualquat<T, Q> >
+	template <typename T, precision P>
+	struct type<tdualquat, T, P>
 	{
 		static bool const is_vec = false;
 		static bool const is_mat = false;

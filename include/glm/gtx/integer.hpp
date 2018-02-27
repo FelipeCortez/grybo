@@ -6,19 +6,15 @@
 /// @defgroup gtx_integer GLM_GTX_integer
 /// @ingroup gtx
 ///
-/// Include <glm/gtx/integer.hpp> to use the features of this extension.
+/// @brief Add support for integer for core functions
 ///
-/// Add support for integer for core functions
+/// <glm/gtx/integer.hpp> need to be included to use these functionalities.
 
 #pragma once
 
 // Dependency:
 #include "../glm.hpp"
 #include "../gtc/integer.hpp"
-
-#ifndef GLM_ENABLE_EXPERIMENTAL
-#	error "GLM: GLM_GTX_integer is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it."
-#endif
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_EXT_INCLUDED)
 #	pragma message("GLM: GLM_GTX_integer extension included")
@@ -31,7 +27,7 @@ namespace glm
 
 	//! Returns x raised to the y power. 
 	//! From GLM_GTX_integer extension.
-	GLM_FUNC_DECL int pow(int x, uint y);
+	GLM_FUNC_DECL int pow(int x, int y);
 
 	//! Returns the positive square root of x.
 	//! From GLM_GTX_integer extension.
@@ -47,8 +43,8 @@ namespace glm
 
 	//! Return the factorial value of a number (!12 max, integer only)
 	//! From GLM_GTX_integer extension.
-	template<typename genType> 
-	GLM_FUNC_DECL genType factorial(genType const& x);
+	template <typename genType> 
+	GLM_FUNC_DECL genType factorial(genType const & x);
 
 	//! 32bit signed integer. 
 	//! From GLM_GTX_integer extension.
