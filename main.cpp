@@ -24,7 +24,7 @@ const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
-const float SCROLL_SPEED = 5.0f;
+const float SCROLL_SPEED = 3.0f;
 const unsigned int NOTES = 5;
 
 std::default_random_engine generator;
@@ -59,6 +59,9 @@ int main(int argc, char* args[]) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
   SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+
   SDL_GLContext glContext = SDL_GL_CreateContext(window);
   SDL_GL_SetSwapInterval(1);
   SDL_GL_MakeCurrent(window, glContext);

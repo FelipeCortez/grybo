@@ -1,0 +1,21 @@
+* 2017-02-26 (Day 4)
+** Model loading with assimp. Took a few hours to realize I had to change the shaders to add a location for normals but it worked.
+** Added my note model
+** Realized some transforms were wrong. Reordered, relearned transform operation order
+** Aligned notes with fretboard. Starting to look and feel like Guitar Hero!
+
+* 2017-02-25 (Day 3)
+** Initial camera work
+** Texture for fretboard added to program
+** Fretboard scrolls, but no notes yet
+** Also organized the code a bit, putting shapes into a header
+** Spent the afternoon relearning the little I knew from Blender and modeled a Guitar Hero style note gem. Also made a texture and a UV map!
+*** Blender interpolates textures by default. A bit of a headache to solve it
+
+* 2017-02-20 (Day 2)
+** SDL2 + OpenGL context with gl3w for function pointers
+*** GLAD didn't work for some reason. Can't remember why
+** I can draw a triangle. Everything in 3D is triangles, so it's pretty much done
+
+* 2017-02-19 (Day 1)
+** Opened a window with SDL
