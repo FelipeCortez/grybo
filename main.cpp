@@ -33,10 +33,10 @@ std::uniform_int_distribution<int> posDistribution(0, 1000);
 auto getRandomNote = std::bind(noteDistribution, generator);
 auto getRandomPos = std::bind(posDistribution, generator);
 
-typedef struct Note {
+struct Note {
   int which;
   float posZ;
-} Note;
+};
 
 int main(int argc, char* args[]) {
   SDL_Window* window = NULL;
@@ -60,7 +60,7 @@ int main(int argc, char* args[]) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
   SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
   SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
   SDL_GLContext glContext = SDL_GL_CreateContext(window);
   SDL_GL_SetSwapInterval(1);
@@ -88,7 +88,6 @@ int main(int argc, char* args[]) {
   glEnable(GL_DEPTH_TEST);
 
   Model ourModel("assets/note.obj");
-  //Model ourModel("assets/nanosuit/nanosuit.obj");
 
   int width, height, nrChannels;
   unsigned int measureThickTexture, measureThinTexture;
@@ -97,7 +96,7 @@ int main(int argc, char* args[]) {
   glBindTexture(GL_TEXTURE_2D, measureThickTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   stbi_set_flip_vertically_on_load(true);
@@ -116,7 +115,7 @@ int main(int argc, char* args[]) {
   glBindTexture(GL_TEXTURE_2D, measureThinTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   data = stbi_load("assets/measure-thin.png", &width, &height, &nrChannels, 0);
 

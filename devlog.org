@@ -1,3 +1,14 @@
+* 2017-02-28 (Day 6)
+** Using mipmaps for measure textures. Fixes line flickering
+** MIDI reading working separate from game
+*** Reads note on messages, calculated measure, absolute time
+
+* 2017-02-27 (Day 5)
+** Added MSAA
+** Tried to write my own midiparser
+** Turns out I'm really bad at parsing files
+** Used Craig Sapps' midifile instead
+
 * 2017-02-26 (Day 4)
 ** Model loading with assimp. Took a few hours to realize I had to change the shaders to add a location for normals but it worked.
 ** Added my note model
