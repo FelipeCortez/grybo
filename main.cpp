@@ -4,6 +4,7 @@
 #include <SDL_opengl.h>
 #include <math.h>
 #include <random>
+#include "midi.h"
 #include "shader.h"
 #include "shapes.h"
 #include "model.h"
@@ -24,7 +25,7 @@ const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
-const float SCROLL_SPEED = 3.0f;
+const float SCROLL_SPEED = 1.8f;
 const unsigned int NOTES = 5;
 
 std::default_random_engine generator;
@@ -152,20 +153,16 @@ int main(int argc, char* args[]) {
   float upDownValue = 0.0f;
   float sidesValue = 0.0f;
   float cameraZ = -3.0f;
-  //float cameraZ = -10.0f;
 
   int i;
 
-  Note randomNotes[1000];
   float notePositions[NOTES] = {0};
 
   for (i = 0; i < NOTES; ++i) {
     notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -0.37f, 0.37f);
   }
 
-  for (i = 0; i < 1000; ++i) {
-    randomNotes[i] = { getRandomNote(), (float)getRandomPos() * 0.5f };
-  }
+  auto notes = getNotesFromMidiFile("assets/test.mid");
 
   while(!quit) {
     pastTime = time;
@@ -222,19 +219,21 @@ int main(int argc, char* args[]) {
     modelShader.setMat4("view",  view);
     modelShader.setMat4("projection", projection);
 
+
     const float scaleFactor = 0.08f + upDownValue;
-    for (i = 0; i < 1000; ++i) {
+
+    for (auto note : notes) {
       glm::mat4 model(1.0f);
-      model = glm::translate(model, glm::vec3(notePositions[randomNotes[i].which],
+      model = glm::translate(model, glm::vec3(notePositions[note.note],
                                               0.0f,
-                                              -randomNotes[i].posZ));
+                                              -note.measure * 4.0f));
       model = glm::scale(model, glm::vec3(scaleFactor));
       model = glm::translate(model, glm::vec3(0.0f, 0.26f, 0.0f));
       modelShader.setMat4("model", model);
       ourModel.Draw(modelShader);
     }
 
-    std::cout << sidesValue << " | " << upDownValue << std::endl;
+    //std::cout << sidesValue << " | " << upDownValue << std::endl;
     //std::cout << dt << std::endl;
 
     SDL_GL_SwapWindow(window);

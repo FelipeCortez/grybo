@@ -1,31 +1,36 @@
+#ifndef MIDI_H
+#define MIDI_H
+
 #include <iostream>
 #include <midifile/MidiFile.h>
 #include <vector>
+#include <string>
 
 struct GameNote {
   float measure;
-  unsigned int note;
+  int note;
   float seconds;
 };
 
-std::vector<GameNote> notes;
+std::vector<GameNote> getNotesFromMidiFile(std::string midiFile) {
+  MidiFile midifile(midiFile); // naming things is hard
 
-int main() {
-  MidiFile midifile("test.mid");
+  std::vector<GameNote> notes;
 
   int tracks = midifile.getTrackCount();
-  cout << "TPQ: " << midifile.getTicksPerQuarterNote() << endl;
   int tpq = midifile.getTicksPerQuarterNote();
   int tpm = tpq * 4;
 
   if (tracks > 1) {
-    cout << "TRACKS: " << tracks << endl;
+    //cout << "TRACKS: " << tracks << endl;
   }
-  for (int track=0; track < tracks; track++) {
+
+  for (int track = 0; track < tracks; ++track) {
     if (tracks > 1) {
       //cout << "\nTrack " << track << endl;
     }
-    for (int event=0; event < midifile[track].size(); event++) {
+
+    for (int event = 0; event < midifile[track].size(); ++event) {
       if (midifile[track][event].isTempo()) {
         //cout << "tempo:\t" << midifile[track][event].getTempoBPM() << endl;
       } else if (midifile[track][event].isNoteOn()) {
@@ -39,14 +44,16 @@ int main() {
         */
         GameNote newNote {
             midifile[track][event].tick / (float) tpm,
-            (uint32_t) midifile[track][event][1],
+            -((midifile[track][event][1] - 60) - 4),
             (float) midifile.getTimeInSeconds(midifile[track][event].tick)
         };
         cout << newNote.measure << "|" << newNote.note << endl;
         notes.push_back(newNote);
       }
     }
-   }
+  }
 
-  return 0;
+  return notes;
 }
+
+#endif
