@@ -14,4 +14,5 @@ void main() {
   gl_Position = projection * view * model * vec4(aPos, 1.0);
   texCoord = vec2(aTexCoords.x, aTexCoords.y);
   fogIntensity = clamp(1 - ((gl_Position.z - 3.0f) / 10.0f), 0.0f, 1.0f);
+
 }

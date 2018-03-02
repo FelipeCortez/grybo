@@ -34,11 +34,6 @@ std::uniform_int_distribution<int> posDistribution(0, 1000);
 auto getRandomNote = std::bind(noteDistribution, generator);
 auto getRandomPos = std::bind(posDistribution, generator);
 
-struct Note {
-  int which;
-  float posZ;
-};
-
 int main(int argc, char* args[]) {
   SDL_Window* window = NULL;
 
@@ -109,7 +104,6 @@ int main(int argc, char* args[]) {
   } else {
       std::cout << "Failed to load texture" << std::endl;
   }
-
   stbi_image_free(data);
 
   glGenTextures(1, &measureThinTexture);
@@ -228,8 +222,34 @@ int main(int argc, char* args[]) {
                                               0.0f,
                                               -note.measure * 4.0f));
       model = glm::scale(model, glm::vec3(scaleFactor));
-      model = glm::translate(model, glm::vec3(0.0f, 0.26f, 0.0f));
       modelShader.setMat4("model", model);
+
+      // G: 74b544
+      // R: dd3e3e
+      // Y: ddd43e
+      // B: 3e85dd
+      // O: dd983e
+      glm::vec4 noteColor;
+      switch (note.note) {
+      case 0:
+        noteColor = glm::vec4(0x74 / 255.0f, 0xb5 / 255.0f, 0x44 / 255.0f, 1.0f);
+        break;
+      case 1:
+        noteColor = glm::vec4(0xdd / 255.0f, 0x3e / 255.0f, 0x3e / 255.0f, 1.0f);
+        break;
+      case 2:
+        noteColor = glm::vec4(0xdd / 255.0f, 0xd4 / 255.0f, 0x3e / 255.0f, 1.0f);
+        break;
+      case 3:
+        noteColor = glm::vec4(0x3e / 255.0f, 0x85 / 255.0f, 0xdd / 255.0f, 1.0f);
+        break;
+      case 4:
+        noteColor = glm::vec4(0xdd / 255.0f, 0x98 / 255.0f, 0x3e / 255.0f, 1.0f);
+        break;
+      }
+
+      modelShader.setVec4("noteColor", noteColor);
+
       ourModel.Draw(modelShader);
     }
 

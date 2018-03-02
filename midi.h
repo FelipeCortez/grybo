@@ -44,10 +44,10 @@ std::vector<GameNote> getNotesFromMidiFile(std::string midiFile) {
         */
         GameNote newNote {
             midifile[track][event].tick / (float) tpm,
-            -((midifile[track][event][1] - 60) - 4),
+            64 - midifile[track][event][1],
             (float) midifile.getTimeInSeconds(midifile[track][event].tick)
         };
-        cout << newNote.measure << "|" << newNote.note << endl;
+        //cout << newNote.measure << "|" << newNote.note << endl;
         notes.push_back(newNote);
       }
     }
