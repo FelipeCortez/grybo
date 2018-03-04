@@ -46,7 +46,7 @@ int main(int argc, char* args[]) {
     return 1;
   }
 
-  window = SDL_CreateWindow("Hero",
+  window = SDL_CreateWindow("Grybo",
                             SDL_WINDOWPOS_CENTERED,
                             SDL_WINDOWPOS_CENTERED,
                             SCREEN_WIDTH,

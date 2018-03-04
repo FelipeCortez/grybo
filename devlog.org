@@ -1,5 +1,6 @@
 * 2017-03-04 (Day 10)
 ** msToPos function. Now able to handle tempo changes!
+** Created GitHub repository and added a screenshot
 
 * 2017-03-03 (Day 9)
 ** TPQ is tempo independent
