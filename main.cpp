@@ -25,8 +25,10 @@ const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
-const float SCROLL_SPEED = 1.8f;
+const float STRUM_BAR_POSITION = 0.6f;
 const unsigned int NOTES = 5;
+
+float currentBPM = 120.0f;
 
 std::default_random_engine generator;
 std::uniform_int_distribution<int> noteDistribution(0, NOTES);
@@ -38,7 +40,6 @@ int main(int argc, char* args[]) {
   SDL_Window* window = NULL;
 
   if (SDL_Init(SDL_INIT_VIDEO  |
-               SDL_INIT_AUDIO  |
                SDL_INIT_EVENTS |
                SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
@@ -72,6 +73,7 @@ int main(int argc, char* args[]) {
     return 1;
   }
 
+  PlaneShape strumBarPlaneShape = initPlane(false);
   PlaneShape planeShape = initPlane();
 
   glm::mat4 view = glm::mat4(1.0f);
@@ -83,7 +85,7 @@ int main(int argc, char* args[]) {
   glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   glEnable(GL_DEPTH_TEST);
 
-  Model ourModel("assets/note.obj");
+  Model noteModel("assets/note.obj");
 
   int width, height, nrChannels;
   unsigned int measureThickTexture, measureThinTexture;
@@ -123,15 +125,16 @@ int main(int argc, char* args[]) {
 
   stbi_image_free(data);
 
-  Shader ourShader("assets/1.vert", "assets/1.frag");
-  ourShader.use();
-  ourShader.setInt("texture2d", 0);
+  Shader strumBarShader("assets/strum.vert", "assets/strum.frag");
+  Shader fretboardShader("assets/fretboard.vert", "assets/fretboard.frag");
+  fretboardShader.use();
+  fretboardShader.setInt("texture2d", 0);
 
   Shader modelShader("assets/model.vert", "assets/model.frag");
 
   SDL_Event e;
 
-  Uint32 time, pastTime;
+  uint32_t time, pastTime;
   float dt;
 
   time = SDL_GetTicks();
@@ -153,10 +156,11 @@ int main(int argc, char* args[]) {
   float notePositions[NOTES] = {0};
 
   for (i = 0; i < NOTES; ++i) {
-    notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -0.37f, 0.37f);
+    notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -0.39f, 0.39f);
   }
 
-  auto notes = getNotesFromMidiFile("assets/test.mid");
+  // auto gameSong = getSongFromMidiFile("assets/test-tempo-100-then-150.mid");
+  auto gameSong = getSongFromMidiFile("assets/ovo.mid");
 
   while(!quit) {
     pastTime = time;
@@ -186,7 +190,8 @@ int main(int argc, char* args[]) {
       }
     }
 
-    cameraZ += SCROLL_SPEED * dt;
+    cameraZ = msToPos(time, gameSong);
+    //cout << time << "|" << cameraZ << endl;
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -196,39 +201,38 @@ int main(int argc, char* args[]) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, measureThinTexture);
 
-    ourShader.use();
-
     view = glm::mat4();
     view = glm::rotate(view, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     view = glm::translate(view, glm::vec3(0.0f, -0.7f, cameraZ));
 
-    ourShader.setMat4("view",  view);
-    ourShader.setMat4("projection", projection);
+    fretboardShader.use();
+
+    fretboardShader.setMat4("view",  view);
+    fretboardShader.setMat4("projection", projection);
 
     for (i = 0; i < 1000; ++i) {
-      drawPlane(ourShader, planeShape, i, (i % 4) == 0);
+      drawPlane(fretboardShader, planeShape, i, (i % 4) == 0);
     }
 
     modelShader.use();
     modelShader.setMat4("view",  view);
     modelShader.setMat4("projection", projection);
 
-
     const float scaleFactor = 0.08f + upDownValue;
 
-    for (auto note : notes) {
+    for (auto note : gameSong.gameNotes) {
       glm::mat4 model(1.0f);
       model = glm::translate(model, glm::vec3(notePositions[note.note],
                                               0.0f,
-                                              -note.measure * 4.0f));
+                                              -note.zPosition));
       model = glm::scale(model, glm::vec3(scaleFactor));
       modelShader.setMat4("model", model);
 
-      // G: 74b544
-      // R: dd3e3e
-      // Y: ddd43e
-      // B: 3e85dd
-      // O: dd983e
+      // G: 0x74b544
+      // R: 0xdd3e3e
+      // Y: 0xddd43e
+      // B: 0x3e85dd
+      // O: 0xdd983e
       glm::vec4 noteColor;
       switch (note.note) {
       case 0:
@@ -246,12 +250,19 @@ int main(int argc, char* args[]) {
       case 4:
         noteColor = glm::vec4(0xdd / 255.0f, 0x98 / 255.0f, 0x3e / 255.0f, 1.0f);
         break;
+      default:
+        noteColor = glm::vec4(0xdd / 255.0f, 0x98 / 255.0f, 0x3e / 255.0f, 1.0f);
       }
 
       modelShader.setVec4("noteColor", noteColor);
-
-      ourModel.Draw(modelShader);
+      noteModel.Draw(modelShader);
     }
+
+    strumBarShader.use();
+    strumBarShader.setMat4("view",  view);
+    strumBarShader.setMat4("projection", projection);
+    drawPlane(strumBarShader, strumBarPlaneShape, cameraZ + STRUM_BAR_POSITION, false);
+    //std::cout << cameraZ + STRUM_BAR_POSITION - 0.5f << std::endl;
 
     //std::cout << sidesValue << " | " << upDownValue << std::endl;
     //std::cout << dt << std::endl;

@@ -1,3 +1,22 @@
+* 2017-03-04 (Day 10)
+** msToPos function. Now able to handle tempo changes!
+
+* 2017-03-03 (Day 9)
+** TPQ is tempo independent
+** Always 480 for Logic (?)
+*** I think you can select the resolution
+** One unit in game world is a quarter note!
+** No progress on game itself. Stuck trying to think how to map seconds to game positions
+
+* 2017-03-02 (Day 8)
+** Added a strum bar plane
+
+* 2017-03-01 (Day 7)
+** MIDI reading integrated into the game
+** Game now displays MIDI charts!
+** Color map for notes
+** GRYBO notes! Looks pretty nice.
+
 * 2017-02-28 (Day 6)
 ** Using mipmaps for measure textures. Fixes line flickering
 ** MIDI reading working separate from game

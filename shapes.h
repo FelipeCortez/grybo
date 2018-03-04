@@ -50,10 +50,10 @@ float boxVertices[] = {
   -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
-typedef struct BoxShape {
+struct BoxShape {
   unsigned int VAOBox;
   unsigned int VBOBox;
-} BoxShape;
+};
 
 BoxShape initBox() {
   BoxShape boxShape;
@@ -97,13 +97,14 @@ unsigned int indices[] = {
   1, 2, 3
 };
 
-typedef struct PlaneShape {
+struct PlaneShape {
   unsigned int VAOPlane;
   unsigned int VBOPlane;
   unsigned int EBOPlane;
-} PlaneShape;
+  bool textured;
+};
 
-PlaneShape initPlane() {
+PlaneShape initPlane(bool textured = true) {
   PlaneShape planeShape;
 
   glGenVertexArrays(1, &planeShape.VAOPlane);
@@ -121,22 +122,39 @@ PlaneShape initPlane() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
 
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+  if (textured) {
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+  }
 
+  planeShape.textured = textured;
   return planeShape;
 }
 
-void drawPlane(Shader ourShader, PlaneShape planeShape, int pos, bool thick) {
+void drawPlane(Shader ourShader, PlaneShape planeShape, float pos, bool thick) {
   glm::mat4 model(1.0f);
-  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos - 0.5f));
+
+  if (!planeShape.textured) {
+    model = glm::translate(model, glm::vec3(0.0f, 0.001f, 0.0f)); // move a bit up
+  }
+
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos));
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -0.5f)); // move origin to bottom
+
+  if (!planeShape.textured) {
+    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 0.05f)); // shrink in z
+  }
+
   model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-  if (thick) {
-    ourShader.setInt("texture2d", 0);
-  } else {
-    ourShader.setInt("texture2d", 1);
+  if (planeShape.textured) {
+    if (thick) {
+      ourShader.setInt("texture2d", 0);
+    } else {
+      ourShader.setInt("texture2d", 1);
+    }
   }
+
   ourShader.setMat4("model", model);
 
   glBindVertexArray(planeShape.VAOPlane);
