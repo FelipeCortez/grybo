@@ -8,6 +8,8 @@
 #include "shader.h"
 #include "shapes.h"
 #include "model.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl_gl3.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -72,6 +74,15 @@ int main(int argc, char* args[]) {
     fprintf(stderr, "OpenGL 3.4 not supported\n");
     return 1;
   }
+
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+  ImGui_ImplSdlGL3_Init(window);
+
+  // Setup style
+  ImGui::StyleColorsDark();
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   PlaneShape strumBarPlaneShape = initPlane(false);
   PlaneShape planeShape = initPlane();
@@ -168,6 +179,8 @@ int main(int argc, char* args[]) {
     dt = (time - pastTime) / 1000.0f;
 
     while (SDL_PollEvent(&e)) {
+      ImGui_ImplSdlGL3_ProcessEvent(&e);
+
       if (e.type == SDL_KEYDOWN) {
         switch(e.key.keysym.sym) {
         case SDLK_UP:
@@ -188,6 +201,25 @@ int main(int argc, char* args[]) {
       } else if (e.type == SDL_QUIT) {
         quit = true;
       }
+    }
+
+    ImGui_ImplSdlGL3_NewFrame(window);
+    {
+      static float f = 0.0f;
+      static int counter = 0;
+      ImGui::Text("Hello, world!");                           // Display some text (you can use a format string too)
+      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+      ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+      //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
+      //ImGui::Checkbox("Another Window", &show_another_window);
+
+      if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
+          counter++;
+      ImGui::SameLine();
+      ImGui::Text("counter = %d", counter);
+
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     }
 
     cameraZ = msToPos(time, gameSong);
@@ -267,6 +299,9 @@ int main(int argc, char* args[]) {
     //std::cout << sidesValue << " | " << upDownValue << std::endl;
     //std::cout << dt << std::endl;
 
+    ImGui::Render();
+    ImGui_ImplSdlGL3_RenderDrawData(ImGui::GetDrawData());
+
     SDL_GL_SwapWindow(window);
   }
 
@@ -278,6 +313,8 @@ int main(int argc, char* args[]) {
   glDeleteVertexArrays(1, &VAOBox);
   glDeleteBuffers(1, &VBOBox);
   */
+  ImGui_ImplSdlGL3_Shutdown();
+  ImGui::DestroyContext();
 
   SDL_GL_DeleteContext(glContext);
   SDL_DestroyWindow(window);
