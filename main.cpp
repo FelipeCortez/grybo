@@ -32,6 +32,7 @@ const float UPDOWN_INCREMENT = 0.005f;
 const float STRUM_BAR_POSITION = 0.6f;
 const unsigned int NOTES = 5;
 
+float pitch = 515.757;
 float currentBPM = 120.0f;
 float seconds_offset = 0.0f;
 
@@ -41,43 +42,47 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
 }
 
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
-    const struct SoundIoChannelLayout *layout = &outstream->layout;
-    float float_sample_rate = outstream->sample_rate;
-    float seconds_per_frame = 1.0f / float_sample_rate;
-    struct SoundIoChannelArea *areas;
-    int frames_left = frame_count_max;
-    int err;
+  const struct SoundIoChannelLayout *layout = &outstream->layout;
+  float float_sample_rate = outstream->sample_rate;
+  float seconds_per_frame = 1.0f / float_sample_rate;
+  struct SoundIoChannelArea *areas;
+  int frames_left = frame_count_max;
+  int err;
+  static float phase = 0;
 
-    while (frames_left > 0) {
-        int frame_count = frames_left;
+  while (frames_left > 0) {
+    int frame_count = frames_left;
 
-        if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count))) {
-            fprintf(stderr, "%s\n", soundio_strerror(err));
-            exit(1);
-        }
-
-        if (!frame_count)
-            break;
-
-        float pitch = 440.0f;
-        float radians_per_second = pitch * TWO_PI;
-        for (int frame = 0; frame < frame_count; frame += 1) {
-            float sample = sinf((seconds_offset + frame * seconds_per_frame) * radians_per_second);
-            for (int channel = 0; channel < layout->channel_count; channel += 1) {
-                float *ptr = (float*)(areas[channel].ptr + areas[channel].step * frame);
-                *ptr = sample;
-            }
-        }
-        seconds_offset = fmodf(seconds_offset +
-            seconds_per_frame * frame_count, 1.0f);
-
-        if ((err = soundio_outstream_end_write(outstream))) {
-            fprintf(stderr, "%s\n", soundio_strerror(err));
-            exit(1);
-        }
-
-        frames_left -= frame_count;
+    if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count))) {
+      fprintf(stderr, "%s\n", soundio_strerror(err));
+      exit(1);
     }
+
+    if (!frame_count)
+      break;
+
+    for (int frame = 0; frame < frame_count; frame += 1) {
+      phase += TWO_PI * pitch * seconds_per_frame;
+
+      if (phase > TWO_PI) {
+        phase -= TWO_PI;
+      }
+
+      float sample = sin(phase) * 0.5f;
+
+      for (int channel = 0; channel < layout->channel_count; channel += 1) {
+        float *ptr = (float*)(areas[channel].ptr + areas[channel].step * frame);
+        *ptr = sample;
+      }
+    }
+
+    if ((err = soundio_outstream_end_write(outstream))) {
+      fprintf(stderr, "%s\n", soundio_strerror(err));
+      exit(1);
+    }
+
+    frames_left -= frame_count;
+  }
 }
 
 int main(int argc, char* args[]) {
@@ -296,6 +301,7 @@ int main(int argc, char* args[]) {
     ImGui_ImplSdlGL3_NewFrame(window);
 
     ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "ratio = %.3f");
+    ImGui::SliderFloat("pitch", &pitch, 220.0f, 880.0f, "pitch = %.3f");
 
     cameraZ = msToPos(time, gameSong);
 
