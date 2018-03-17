@@ -4,6 +4,7 @@
 #include <SDL_opengl.h>
 #include <math.h>
 #include <random>
+#include <soundio/soundio.h>
 #include "midi.h"
 #include "shader.h"
 #include "shapes.h"
@@ -18,10 +19,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-double rangeMap(double input, double inputStart, double inputEnd, double outputStart, double outputEnd) {
-  double slope = (outputEnd - outputStart) / (inputEnd - inputStart);
-  return outputStart + (slope * (input - inputStart));
-}
+#define AUDIO_FORMAT AUDIO_S16LSB
+#define AUDIO_RATE 48000
+#define AUDIO_CHANNELS 2
+#define AUDIO_BLOCK 256
+#define TWO_PI (3.14159265f * 2.0f)
 
 const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
@@ -31,14 +33,101 @@ const float STRUM_BAR_POSITION = 0.6f;
 const unsigned int NOTES = 5;
 
 float currentBPM = 120.0f;
+float seconds_offset = 0.0f;
 
-std::default_random_engine generator;
-std::uniform_int_distribution<int> noteDistribution(0, NOTES);
-std::uniform_int_distribution<int> posDistribution(0, 1000);
-auto getRandomNote = std::bind(noteDistribution, generator);
-auto getRandomPos = std::bind(posDistribution, generator);
+double rangeMap(double input, double inputStart, double inputEnd, double outputStart, double outputEnd) {
+  double slope = (outputEnd - outputStart) / (inputEnd - inputStart);
+  return outputStart + (slope * (input - inputStart));
+}
+
+void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
+    const struct SoundIoChannelLayout *layout = &outstream->layout;
+    float float_sample_rate = outstream->sample_rate;
+    float seconds_per_frame = 1.0f / float_sample_rate;
+    struct SoundIoChannelArea *areas;
+    int frames_left = frame_count_max;
+    int err;
+
+    while (frames_left > 0) {
+        int frame_count = frames_left;
+
+        if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count))) {
+            fprintf(stderr, "%s\n", soundio_strerror(err));
+            exit(1);
+        }
+
+        if (!frame_count)
+            break;
+
+        float pitch = 440.0f;
+        float radians_per_second = pitch * TWO_PI;
+        for (int frame = 0; frame < frame_count; frame += 1) {
+            float sample = sinf((seconds_offset + frame * seconds_per_frame) * radians_per_second);
+            for (int channel = 0; channel < layout->channel_count; channel += 1) {
+                float *ptr = (float*)(areas[channel].ptr + areas[channel].step * frame);
+                *ptr = sample;
+            }
+        }
+        seconds_offset = fmodf(seconds_offset +
+            seconds_per_frame * frame_count, 1.0f);
+
+        if ((err = soundio_outstream_end_write(outstream))) {
+            fprintf(stderr, "%s\n", soundio_strerror(err));
+            exit(1);
+        }
+
+        frames_left -= frame_count;
+    }
+}
 
 int main(int argc, char* args[]) {
+  int err;
+  struct SoundIo *soundio = soundio_create();
+  if (!soundio) {
+    fprintf(stderr, "out of memory\n");
+    return 1;
+  }
+
+  if ((err = soundio_connect(soundio))) {
+    fprintf(stderr, "error connecting: %s", soundio_strerror(err));
+    return 1;
+  }
+
+  soundio_flush_events(soundio);
+
+  int default_out_device_index = soundio_default_output_device_index(soundio);
+  if (default_out_device_index < 0) {
+    fprintf(stderr, "no output device found");
+    return 1;
+  }
+
+  struct SoundIoDevice *device = soundio_get_output_device(soundio, default_out_device_index);
+  if (!device) {
+    fprintf(stderr, "out of memory");
+    return 1;
+  }
+
+  fprintf(stderr, "Output device: %s\n", device->name);
+
+  struct SoundIoOutStream *outstream = soundio_outstream_create(device);
+  outstream->format = SoundIoFormatFloat32NE;
+  outstream->write_callback = write_callback;
+
+  if ((err = soundio_outstream_open(outstream))) {
+    fprintf(stderr, "unable to open device: %s", soundio_strerror(err));
+    return 1;
+  }
+
+  if (outstream->layout_error)
+    fprintf(stderr, "unable to set channel layout: %s\n", soundio_strerror(outstream->layout_error));
+
+  if ((err = soundio_outstream_start(outstream))) {
+    fprintf(stderr, "unable to start device: %s", soundio_strerror(err));
+    return 1;
+  }
+
+  // ---------------------------------------
+
   SDL_Window* window = NULL;
 
   if (SDL_Init(SDL_INIT_VIDEO  |
@@ -65,6 +154,7 @@ int main(int argc, char* args[]) {
   SDL_GL_SetSwapInterval(1);
   SDL_GL_MakeCurrent(window, glContext);
 
+
   if (gl3wInit()) {
     fprintf(stderr, "failed to initialize OpenGL\n");
     return 1;
@@ -82,7 +172,6 @@ int main(int argc, char* args[]) {
 
   // Setup style
   ImGui::StyleColorsDark();
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   PlaneShape strumBarPlaneShape = initPlane(false);
   PlaneShape planeShape = initPlane();
@@ -170,7 +259,6 @@ int main(int argc, char* args[]) {
     notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -0.39f, 0.39f);
   }
 
-  // auto gameSong = getSongFromMidiFile("assets/test-tempo-100-then-150.mid");
   auto gameSong = getSongFromMidiFile("assets/ovo.mid");
 
   while(!quit) {
@@ -203,27 +291,13 @@ int main(int argc, char* args[]) {
       }
     }
 
+    static float fogZ = 1.2f;
+
     ImGui_ImplSdlGL3_NewFrame(window);
-    {
-      static float f = 0.0f;
-      static int counter = 0;
-      ImGui::Text("Hello, world!");                           // Display some text (you can use a format string too)
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-      ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-      //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
-      //ImGui::Checkbox("Another Window", &show_another_window);
-
-      if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
-          counter++;
-      ImGui::SameLine();
-      ImGui::Text("counter = %d", counter);
-
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    }
+    ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "ratio = %.3f");
 
     cameraZ = msToPos(time, gameSong);
-    //cout << time << "|" << cameraZ << endl;
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -241,6 +315,7 @@ int main(int argc, char* args[]) {
 
     fretboardShader.setMat4("view",  view);
     fretboardShader.setMat4("projection", projection);
+    fretboardShader.setFloat("fogZ", fogZ);
 
     for (i = 0; i < 1000; ++i) {
       drawPlane(fretboardShader, planeShape, i, (i % 4) == 0);
@@ -249,6 +324,7 @@ int main(int argc, char* args[]) {
     modelShader.use();
     modelShader.setMat4("view",  view);
     modelShader.setMat4("projection", projection);
+    modelShader.setFloat("fogZ", fogZ);
 
     const float scaleFactor = 0.08f + upDownValue;
 
@@ -294,10 +370,12 @@ int main(int argc, char* args[]) {
     strumBarShader.setMat4("view",  view);
     strumBarShader.setMat4("projection", projection);
     drawPlane(strumBarShader, strumBarPlaneShape, cameraZ + STRUM_BAR_POSITION, false);
-    //std::cout << cameraZ + STRUM_BAR_POSITION - 0.5f << std::endl;
 
-    //std::cout << sidesValue << " | " << upDownValue << std::endl;
-    //std::cout << dt << std::endl;
+    ImGui::Text("cameraZ = %f", cameraZ);
+    ImGui::Text("time    = %d", time);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                1000.0f / ImGui::GetIO().Framerate,
+                ImGui::GetIO().Framerate);
 
     ImGui::Render();
     ImGui_ImplSdlGL3_RenderDrawData(ImGui::GetDrawData());
@@ -320,6 +398,10 @@ int main(int argc, char* args[]) {
   SDL_DestroyWindow(window);
 
   SDL_Quit();
+
+  soundio_outstream_destroy(outstream);
+  soundio_device_unref(device);
+  soundio_destroy(soundio);
 
   return 0;
 }
