@@ -32,7 +32,6 @@ const float UPDOWN_INCREMENT = 0.005f;
 const float STRUM_BAR_POSITION = 0.6f;
 const unsigned int NOTES = 5;
 
-float pitch = 515.757;
 float currentBPM = 120.0f;
 float seconds_offset = 0.0f;
 
@@ -61,6 +60,14 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
     if (!frame_count)
       break;
 
+    float pitch;
+
+    if (outstream->userdata != NULL) {
+      pitch = *(float*) outstream->userdata;
+    } else {
+      pitch = 440.0f;
+    }
+
     for (int frame = 0; frame < frame_count; frame += 1) {
       phase += TWO_PI * pitch * seconds_per_frame;
 
@@ -87,6 +94,9 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
 
 int main(int argc, char* args[]) {
   int err;
+  void* pitch_ptr = malloc(sizeof(float));
+  float pitch = 440.0f;
+
   struct SoundIo *soundio = soundio_create();
   if (!soundio) {
     fprintf(stderr, "out of memory\n");
@@ -206,10 +216,10 @@ int main(int argc, char* args[]) {
   unsigned char* data = stbi_load("assets/measure-thick.png", &width, &height, &nrChannels, 0);
 
   if (data) {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-      glGenerateMipmap(GL_TEXTURE_2D);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
   } else {
-      std::cout << "Failed to load texture" << std::endl;
+    std::cout << "Failed to load texture" << std::endl;
   }
   stbi_image_free(data);
 
@@ -302,6 +312,8 @@ int main(int argc, char* args[]) {
 
     ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "ratio = %.3f");
     ImGui::SliderFloat("pitch", &pitch, 220.0f, 880.0f, "pitch = %.3f");
+    *(float*) pitch_ptr = pitch;
+    outstream->userdata = pitch_ptr;
 
     cameraZ = msToPos(time, gameSong);
 
