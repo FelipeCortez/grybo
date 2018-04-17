@@ -1,4 +1,5 @@
 #include <iostream>
+#include <climits>
 #include <GL/gl3w.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -21,10 +22,17 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #define AUDIO_FORMAT AUDIO_S16LSB
-#define AUDIO_RATE 44100
+#define SAMPLE_RATE 44100
 #define AUDIO_CHANNELS 2
 #define AUDIO_BLOCK 256 // not used! apparently that's not the way libsoundio works
 #define TWO_PI (3.14159265f * 2.0f)
+
+struct SongData {
+  int pos;
+  int len;
+  int channels;
+  short* stream;
+};
 
 const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
@@ -43,13 +51,10 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
 
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
   const struct SoundIoChannelLayout *layout = &outstream->layout;
-  float float_sample_rate = outstream->sample_rate;
-  float seconds_per_frame = 1.0f / float_sample_rate;
+  //float float_sample_rate = outstream->sample_rate;
   struct SoundIoChannelArea *areas;
   int frames_left = frame_count_max;
   int err;
-  static float phase = 0;
-
   while (frames_left > 0) {
     int frame_count = frames_left;
 
@@ -61,27 +66,30 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
     if (!frame_count)
       break;
 
-    float pitch;
+    SongData* songData;
 
     if (outstream->userdata != NULL) {
-      pitch = *(float*) outstream->userdata;
+      songData = (SongData*) outstream->userdata;
     } else {
-      pitch = 440.0f;
+      songData = nullptr;
     }
 
+    float sample = 0;
     for (int frame = 0; frame < frame_count; frame += 1) {
-      phase += TWO_PI * pitch * seconds_per_frame;
-
-      if (phase > TWO_PI) {
-        phase -= TWO_PI;
-      }
-
-      float sample = sin(phase) * 0.5f;
-
       for (int channel = 0; channel < layout->channel_count; channel += 1) {
-        float *ptr = (float*)(areas[channel].ptr + areas[channel].step * frame);
+        float *ptr = (float*) (areas[channel].ptr + areas[channel].step * frame);
+
+        if (songData != nullptr && songData->pos < songData->len) {
+          sample = (float) songData->stream[songData->pos + (channel % songData->channels)] / SHRT_MAX;
+
+        } else {
+          sample = 0.0f;
+        }
+
         *ptr = sample;
       }
+
+      songData->pos += songData->channels;
     }
 
     if ((err = soundio_outstream_end_write(outstream))) {
@@ -125,9 +133,17 @@ int main(int argc, char* args[]) {
 
   fprintf(stderr, "Output device: %s\n", device->name);
 
+  SongData songData = {};
+  songData.pos = 0;
+  songData.len = -1;
+  songData.stream = nullptr;
+  songData.channels = 0;
+
   struct SoundIoOutStream *outstream = soundio_outstream_create(device);
   outstream->format = SoundIoFormatFloat32NE;
+  outstream->sample_rate = SAMPLE_RATE;
   outstream->write_callback = write_callback;
+  outstream->userdata = &songData;
 
   if ((err = soundio_outstream_open(outstream))) {
     fprintf(stderr, "unable to open device: %s", soundio_strerror(err));
@@ -162,7 +178,7 @@ int main(int argc, char* args[]) {
 
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
-  SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
   SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
@@ -216,13 +232,11 @@ int main(int argc, char* args[]) {
   short *song;
   int channels, len, ogg_rate;
   len = stb_vorbis_decode_filename("assets/ovo.ogg", &channels, &ogg_rate, &song);
-  std::cout << "len: " << len << std::endl;
-  if (len != -1) {
-    for (int i = 0; i < 10000; ++i) {
-      std::cout << song[i] << "|";
-    }
-    std::cout << endl;
-  }
+
+  songData.pos = 0;
+  songData.len = len;
+  songData.stream = song;
+  songData.channels = channels;
 
   stbi_set_flip_vertically_on_load(true);
   unsigned char* data = stbi_load("assets/measure-thick.png", &width, &height, &nrChannels, 0);
@@ -325,7 +339,6 @@ int main(int argc, char* args[]) {
     ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "ratio = %.3f");
     ImGui::SliderFloat("pitch", &pitch, 220.0f, 880.0f, "pitch = %.3f");
     *(float*) pitch_ptr = pitch;
-    outstream->userdata = pitch_ptr;
 
     cameraZ = msToPos(time, gameSong);
 
