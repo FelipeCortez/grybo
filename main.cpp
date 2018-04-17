@@ -14,15 +14,16 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "stb_vorbis.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #define AUDIO_FORMAT AUDIO_S16LSB
-#define AUDIO_RATE 48000
+#define AUDIO_RATE 44100
 #define AUDIO_CHANNELS 2
-#define AUDIO_BLOCK 256
+#define AUDIO_BLOCK 256 // not used! apparently that's not the way libsoundio works
 #define TWO_PI (3.14159265f * 2.0f)
 
 const unsigned int SCREEN_WIDTH  = 800;
@@ -211,6 +212,17 @@ int main(int argc, char* args[]) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  short *song;
+  int channels, len, ogg_rate;
+  len = stb_vorbis_decode_filename("assets/ovo.ogg", &channels, &ogg_rate, &song);
+  std::cout << "len: " << len << std::endl;
+  if (len != -1) {
+    for (int i = 0; i < 10000; ++i) {
+      std::cout << song[i] << "|";
+    }
+    std::cout << endl;
+  }
 
   stbi_set_flip_vertically_on_load(true);
   unsigned char* data = stbi_load("assets/measure-thick.png", &width, &height, &nrChannels, 0);
