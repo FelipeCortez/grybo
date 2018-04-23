@@ -1,3 +1,11 @@
+* Ideas
+** Use Choro 1906-1947 for menus/loading
+** Maybe add an illustration as if the songs are playing through a gramophone
+** Cuphead-like!
+* 2017-04-17 (Day 13)
+** stb_vorbis added for ogg file decoding
+** Decoder working!
+** Audio now being played in-game!
 * 2017-04-13 (Day 12)
 ** After a long hiatus...
 ** Sine wave pitch value now passed through outstream->userdata

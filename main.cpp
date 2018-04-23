@@ -1,11 +1,10 @@
 #include <iostream>
-#include <climits>
 #include <GL/gl3w.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <math.h>
 #include <random>
-#include <soundio/soundio.h>
+#include "audio.h"
 #include "midi.h"
 #include "shader.h"
 #include "shapes.h"
@@ -15,24 +14,10 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "stb_vorbis.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#define AUDIO_FORMAT AUDIO_S16LSB
-#define SAMPLE_RATE 44100
-#define AUDIO_CHANNELS 2
-#define AUDIO_BLOCK 256 // not used! apparently that's not the way libsoundio works
-#define TWO_PI (3.14159265f * 2.0f)
-
-struct SongData {
-  int pos;
-  int len;
-  int channels;
-  short* stream;
-};
 
 const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
@@ -49,117 +34,9 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
   return outputStart + (slope * (input - inputStart));
 }
 
-void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
-  const struct SoundIoChannelLayout *layout = &outstream->layout;
-  //float float_sample_rate = outstream->sample_rate;
-  struct SoundIoChannelArea *areas;
-  int frames_left = frame_count_max;
-  int err;
-  while (frames_left > 0) {
-    int frame_count = frames_left;
-
-    if ((err = soundio_outstream_begin_write(outstream, &areas, &frame_count))) {
-      fprintf(stderr, "%s\n", soundio_strerror(err));
-      exit(1);
-    }
-
-    if (!frame_count)
-      break;
-
-    SongData* songData;
-
-    if (outstream->userdata != NULL) {
-      songData = (SongData*) outstream->userdata;
-    } else {
-      songData = nullptr;
-    }
-
-    float sample = 0;
-    for (int frame = 0; frame < frame_count; frame += 1) {
-      for (int channel = 0; channel < layout->channel_count; channel += 1) {
-        float *ptr = (float*) (areas[channel].ptr + areas[channel].step * frame);
-
-        if (songData != nullptr && songData->pos < songData->len) {
-          sample = (float) songData->stream[songData->pos + (channel % songData->channels)] / SHRT_MAX;
-
-        } else {
-          sample = 0.0f;
-        }
-
-        *ptr = sample;
-      }
-
-      songData->pos += songData->channels;
-    }
-
-    if ((err = soundio_outstream_end_write(outstream))) {
-      fprintf(stderr, "%s\n", soundio_strerror(err));
-      exit(1);
-    }
-
-    frames_left -= frame_count;
-  }
-}
-
 int main(int argc, char* args[]) {
-  int err;
-  void* pitch_ptr = malloc(sizeof(float));
-  float pitch = 440.0f;
 
-  struct SoundIo *soundio = soundio_create();
-  if (!soundio) {
-    fprintf(stderr, "out of memory\n");
-    return 1;
-  }
-
-  if ((err = soundio_connect(soundio))) {
-    fprintf(stderr, "error connecting: %s", soundio_strerror(err));
-    return 1;
-  }
-
-  soundio_flush_events(soundio);
-
-  int default_out_device_index = soundio_default_output_device_index(soundio);
-  if (default_out_device_index < 0) {
-    fprintf(stderr, "no output device found");
-    return 1;
-  }
-
-  struct SoundIoDevice *device = soundio_get_output_device(soundio, default_out_device_index);
-  if (!device) {
-    fprintf(stderr, "out of memory");
-    return 1;
-  }
-
-  fprintf(stderr, "Output device: %s\n", device->name);
-
-  SongData songData = {};
-  songData.pos = 0;
-  songData.len = -1;
-  songData.stream = nullptr;
-  songData.channels = 0;
-
-  struct SoundIoOutStream *outstream = soundio_outstream_create(device);
-  outstream->format = SoundIoFormatFloat32NE;
-  outstream->sample_rate = SAMPLE_RATE;
-  outstream->write_callback = write_callback;
-  outstream->userdata = &songData;
-
-  if ((err = soundio_outstream_open(outstream))) {
-    fprintf(stderr, "unable to open device: %s", soundio_strerror(err));
-    return 1;
-  }
-
-  if (outstream->layout_error)
-    fprintf(stderr, "unable to set channel layout: %s\n", soundio_strerror(outstream->layout_error));
-
-  if ((err = soundio_outstream_start(outstream))) {
-    fprintf(stderr, "unable to start device: %s", soundio_strerror(err));
-    return 1;
-  }
-
-  // ---------------------------------------
-
+  Audio* audio = new Audio();
   SDL_Window* window = NULL;
 
   if (SDL_Init(SDL_INIT_VIDEO  |
@@ -229,15 +106,6 @@ int main(int argc, char* args[]) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  short *song;
-  int channels, len, ogg_rate;
-  len = stb_vorbis_decode_filename("assets/ovo.ogg", &channels, &ogg_rate, &song);
-
-  songData.pos = 0;
-  songData.len = len;
-  songData.stream = song;
-  songData.channels = channels;
-
   stbi_set_flip_vertically_on_load(true);
   unsigned char* data = stbi_load("assets/measure-thick.png", &width, &height, &nrChannels, 0);
 
@@ -287,7 +155,6 @@ int main(int argc, char* args[]) {
   keys = SDL_GetKeyboardState(NULL);
 
   // game stuff
-
   float upDownValue = 0.0f;
   float sidesValue = 0.0f;
   float cameraZ = -3.0f;
@@ -337,8 +204,6 @@ int main(int argc, char* args[]) {
     ImGui_ImplSdlGL3_NewFrame(window);
 
     ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "ratio = %.3f");
-    ImGui::SliderFloat("pitch", &pitch, 220.0f, 880.0f, "pitch = %.3f");
-    *(float*) pitch_ptr = pitch;
 
     cameraZ = msToPos(time, gameSong);
 
@@ -426,14 +291,6 @@ int main(int argc, char* args[]) {
     SDL_GL_SwapWindow(window);
   }
 
-  /*
-  glDeleteVertexArrays(1, &VAOPlane);
-  glDeleteBuffers(1, &VBOPlane);
-  glDeleteBuffers(1, &EBOPlane);
-
-  glDeleteVertexArrays(1, &VAOBox);
-  glDeleteBuffers(1, &VBOBox);
-  */
   ImGui_ImplSdlGL3_Shutdown();
   ImGui::DestroyContext();
 
@@ -441,10 +298,6 @@ int main(int argc, char* args[]) {
   SDL_DestroyWindow(window);
 
   SDL_Quit();
-
-  soundio_outstream_destroy(outstream);
-  soundio_device_unref(device);
-  soundio_destroy(soundio);
 
   return 0;
 }
