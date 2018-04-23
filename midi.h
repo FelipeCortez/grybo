@@ -131,12 +131,13 @@ GameSong getSongFromMidiFile(std::string midiFile) {
           cout << "start delay: ";
           cout << midifile[track][event].tick << endl;
           startDelay = midifile[track][event].tick;
+        } else if (midifile[track][event][1] >= 60 &&
+                   midifile[track][event][1] <= 64) {
+          GameNote note;
+          note.zPosition = midifile[track][event].tick / (float) ticksPerQuarter;
+          note.note = 64 - midifile[track][event][1];
+          gameNotes.push_back(note);
         }
-
-        GameNote note;
-        note.zPosition = midifile[track][event].tick / (float) ticksPerQuarter;
-        note.note = 64 - midifile[track][event][1];
-        gameNotes.push_back(note);
       }
     }
   }
