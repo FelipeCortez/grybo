@@ -128,8 +128,7 @@ GameSong getSongFromMidiFile(std::string midiFile) {
         // B: 61
         // O: 60
         if (midifile[track][event][1] == 65) {
-          cout << "start delay: ";
-          cout << midifile[track][event].tick << endl;
+          cout << "start delay: " << midifile[track][event].tick << "ms" << endl;
           startDelay = midifile[track][event].tick;
         } else if (midifile[track][event][1] >= 60 &&
                    midifile[track][event][1] <= 64) {

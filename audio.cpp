@@ -31,8 +31,11 @@ void callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame
     }
 
     float sample = 0;
-    int delaySamples = ((float) audioData->startDelay / 1000.0f) * SAMPLE_RATE;
-    if (delaySamples % 2 != 0) {++delaySamples;} // channels are interleaved
+
+    int delaySamples = 0;
+    if (audioData != nullptr) {
+      delaySamples = (audioData->startDelay / 1000.0f * 44100) / 2 * 2;
+    }
 
     for (int frame = 0; frame < frame_count; frame += 1) {
       for (int channel = 0; channel < layout->channel_count; channel += 1) {

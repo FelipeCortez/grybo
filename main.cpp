@@ -23,7 +23,7 @@ const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
-const float STRUM_BAR_POSITION = 1.5f;
+const float STRUM_BAR_OFFSET = 0.70f;
 const unsigned int NOTES = 5;
 
 float currentBPM = 120.0f;
@@ -37,10 +37,10 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
 int main(int argc, char* args[]) {
 
   auto gameSong = getSongFromMidiFile("assets/ovo.mid");
+  cout << "first note: " << gameSong.gameNotes[0].zPosition << endl;
 
   Audio* audio = new Audio();
   audio->audioData->startDelay = gameSong.startDelay;
-  cout << (int) (1869 / 1000.0f * 44100) / 2 * 2 << endl;
 
   SDL_Window* window = NULL;
 
@@ -220,7 +220,7 @@ int main(int argc, char* args[]) {
 
     view = glm::mat4();
     view = glm::rotate(view, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::translate(view, glm::vec3(0.0f, -0.7f, cameraZ));
+    view = glm::translate(view, glm::vec3(0.0f, -0.7f, cameraZ - STRUM_BAR_OFFSET));
 
     fretboardShader.use();
 
@@ -280,7 +280,7 @@ int main(int argc, char* args[]) {
     strumBarShader.use();
     strumBarShader.setMat4("view",  view);
     strumBarShader.setMat4("projection", projection);
-    drawPlane(strumBarShader, strumBarPlaneShape, cameraZ + STRUM_BAR_POSITION, false);
+    drawPlane(strumBarShader, strumBarPlaneShape, cameraZ, false);
 
     ImGui::Text("cameraZ = %f", cameraZ);
     ImGui::Text("time    = %d", time);
