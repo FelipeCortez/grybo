@@ -26,6 +26,7 @@ struct SecondsTempo {
 std::vector<SecondsTempo> tempoTimeMap;
 
 struct GameSong {
+  int startDelay; // in ms
   std::vector<GameNote> gameNotes;
   std::vector<TempoChange> tempoChanges;
   unsigned int ticksPerQuarter;
@@ -95,6 +96,7 @@ GameSong getSongFromMidiFile(std::string midiFile) {
   std::vector<GameNote> gameNotes;
   std::vector<TempoChange> tempoChanges;
 
+  int startDelay = 0;
   int tracks = midifile.getTrackCount();
   int ticksPerQuarter = midifile.getTicksPerQuarterNote();
   cout << "TPQ" << ticksPerQuarter << endl;
@@ -118,6 +120,19 @@ GameSong getSongFromMidiFile(std::string midiFile) {
         //cout << (64 - midifile[track][event][1]) << endl;
         //assert(64 - midifile[track][event][1] >= 0 &&
         //       64 - midifile[track][event][1] <= 4);
+
+        // start: 65
+        // G: 64
+        // R: 63
+        // Y: 62
+        // B: 61
+        // O: 60
+        if (midifile[track][event][1] == 65) {
+          cout << "start delay: ";
+          cout << midifile[track][event].tick << endl;
+          startDelay = midifile[track][event].tick;
+        }
+
         GameNote note;
         note.zPosition = midifile[track][event].tick / (float) ticksPerQuarter;
         note.note = 64 - midifile[track][event][1];
@@ -130,6 +145,7 @@ GameSong getSongFromMidiFile(std::string midiFile) {
   gameSong.gameNotes = gameNotes;
   gameSong.tempoChanges = tempoChanges;
   gameSong.ticksPerQuarter = ticksPerQuarter;
+  gameSong.startDelay = startDelay;
 
   return gameSong;
 }

@@ -1,6 +1,7 @@
 #include <soundio/soundio.h>
 
 struct AudioData {
+  int startDelay;
   int pos;
   int len;
   int channels;

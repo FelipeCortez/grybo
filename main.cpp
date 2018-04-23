@@ -23,7 +23,7 @@ const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
-const float STRUM_BAR_POSITION = 0.6f;
+const float STRUM_BAR_POSITION = 1.5f;
 const unsigned int NOTES = 5;
 
 float currentBPM = 120.0f;
@@ -36,7 +36,12 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
 
 int main(int argc, char* args[]) {
 
+  auto gameSong = getSongFromMidiFile("assets/ovo.mid");
+
   Audio* audio = new Audio();
+  audio->audioData->startDelay = gameSong.startDelay;
+  cout << (int) (1869 / 1000.0f * 44100) / 2 * 2 << endl;
+
   SDL_Window* window = NULL;
 
   if (SDL_Init(SDL_INIT_VIDEO  |
@@ -166,8 +171,6 @@ int main(int argc, char* args[]) {
   for (i = 0; i < NOTES; ++i) {
     notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -0.39f, 0.39f);
   }
-
-  auto gameSong = getSongFromMidiFile("assets/ovo.mid");
 
   while(!quit) {
     pastTime = time;

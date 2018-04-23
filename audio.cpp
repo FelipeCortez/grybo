@@ -31,12 +31,17 @@ void callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame
     }
 
     float sample = 0;
+    int delaySamples = ((float) audioData->startDelay / 1000.0f) * SAMPLE_RATE;
+    if (delaySamples % 2 != 0) {++delaySamples;} // channels are interleaved
+
     for (int frame = 0; frame < frame_count; frame += 1) {
       for (int channel = 0; channel < layout->channel_count; channel += 1) {
         float *ptr = (float*) (areas[channel].ptr + areas[channel].step * frame);
 
-        if (audioData != nullptr && audioData->pos < audioData->len) {
-          sample = (float) audioData->stream[audioData->pos + (channel % audioData->channels)] / SHRT_MAX;
+        if (audioData != nullptr &&
+            audioData->pos - 82422 >= 0 &&
+            audioData->pos - 82422 < audioData->len) {
+          sample = (float) audioData->stream[(audioData->pos - 82422) + (channel % audioData->channels)] / SHRT_MAX;
 
         } else {
           sample = 0.0f;
@@ -135,6 +140,7 @@ Audio::~Audio() {
 
 
 AudioData::AudioData() {
+  startDelay = -1;
   pos = 0;
   len = -1;
   channels = 0;
