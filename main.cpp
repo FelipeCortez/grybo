@@ -92,7 +92,7 @@ int main(int argc, char* args[]) {
 
   glm::mat4 view = glm::mat4(1.0f);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-                                          (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
+                                          (float) SCREEN_WIDTH / (float) SCREEN_HEIGHT,
                                           0.1f,
                                           100.0f);
 
@@ -148,9 +148,10 @@ int main(int argc, char* args[]) {
 
   SDL_Event e;
 
-  uint32_t time, pastTime;
+  uint32_t time, pastTime, startTime;
   float dt;
 
+  startTime = 0;
   time = SDL_GetTicks();
 
   bool quit;
@@ -162,7 +163,7 @@ int main(int argc, char* args[]) {
   // game stuff
   float upDownValue = 0.0f;
   float sidesValue = 0.0f;
-  float cameraZ = -3.0f;
+  float cameraZ = 0.0f;
 
   int i;
 
