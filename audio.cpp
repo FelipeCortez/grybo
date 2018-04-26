@@ -30,21 +30,24 @@ void callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame
       audioData = nullptr;
     }
 
-    float sample = 0;
+    float sample = 0.0f;
+    int delay = 0;
 
-    int delaySamples = 0;
     if (audioData != nullptr) {
-      delaySamples = (audioData->startDelay / 1000.0f * 44100) / 2 * 2;
+      // samplePos = audioData->pos + (audioData->startDelay / 1000.0f * 44100) / 2 * 2;
+      // remember it's two channels
+      delay = -((audioData->startDelay / 1000.0f * 44100) / 2 * 2) * 2;
     }
+
 
     for (int frame = 0; frame < frame_count; frame += 1) {
       for (int channel = 0; channel < layout->channel_count; channel += 1) {
         float *ptr = (float*) (areas[channel].ptr + areas[channel].step * frame);
 
         if (audioData != nullptr &&
-            audioData->pos - 82422 >= 0 &&
-            audioData->pos - 82422 < audioData->len) {
-          sample = (float) audioData->stream[(audioData->pos - 82422) + (channel % audioData->channels)] / SHRT_MAX;
+            audioData->pos + delay >= 0 &&
+            audioData->pos + delay < audioData->len) {
+          sample = (float) audioData->stream[(audioData->pos + delay) + (channel % audioData->channels)] / SHRT_MAX;
 
         } else {
           sample = 0.0f;

@@ -23,7 +23,6 @@ const unsigned int SCREEN_WIDTH  = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
-const float STRUM_BAR_OFFSET = 0.70f;
 const unsigned int NOTES = 5;
 
 float currentBPM = 120.0f;
@@ -36,6 +35,7 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
 
 int main(int argc, char* args[]) {
 
+  float strumBarOffset = 1.350f;
   auto gameSong = getSongFromMidiFile("assets/ovo.mid");
   cout << "first note: " << gameSong.gameNotes[0].zPosition << endl;
 
@@ -163,7 +163,7 @@ int main(int argc, char* args[]) {
   // game stuff
   float upDownValue = 0.0f;
   float sidesValue = 0.0f;
-  float cameraZ = 0.0f;
+  float strumZ = 0.0f;
 
   int i;
 
@@ -209,7 +209,7 @@ int main(int argc, char* args[]) {
 
     ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "ratio = %.3f");
 
-    cameraZ = msToPos(time, gameSong);
+    strumZ = msToPos(time, gameSong);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -221,7 +221,7 @@ int main(int argc, char* args[]) {
 
     view = glm::mat4();
     view = glm::rotate(view, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::translate(view, glm::vec3(0.0f, -0.7f, cameraZ - STRUM_BAR_OFFSET));
+    view = glm::translate(view, glm::vec3(0.0f, -0.7f, strumZ - strumBarOffset));
 
     fretboardShader.use();
 
@@ -230,7 +230,7 @@ int main(int argc, char* args[]) {
     fretboardShader.setFloat("fogZ", fogZ);
 
     for (i = 0; i < 1000; ++i) {
-      drawPlane(fretboardShader, planeShape, i, (i % 4) == 0);
+      drawQuarter(fretboardShader, planeShape, i, (i % 4) == 0);
     }
 
     modelShader.use();
@@ -281,10 +281,13 @@ int main(int argc, char* args[]) {
     strumBarShader.use();
     strumBarShader.setMat4("view",  view);
     strumBarShader.setMat4("projection", projection);
-    drawPlane(strumBarShader, strumBarPlaneShape, cameraZ, false);
+    drawStrumBar(strumBarShader, strumBarPlaneShape, strumZ);
 
-    ImGui::Text("cameraZ = %f", cameraZ);
-    ImGui::Text("time    = %d", time);
+    // ImGui::SliderFloat("song pos", &strumZ, -1.0f, 30.0f, "%.3f");
+    ImGui::SliderFloat("strum bar", &strumBarOffset, -5.0f, 5.0f, "%.3f");
+    ImGui::Text("strumZ = %f", strumZ);
+    ImGui::Text("audio  = %f", (float) audio->audioData->pos / 44100);
+    ImGui::Text("time   = %d", time);
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);

@@ -131,28 +131,31 @@ PlaneShape initPlane(bool textured = true) {
   return planeShape;
 }
 
-void drawPlane(Shader ourShader, PlaneShape planeShape, float pos, bool thick) {
+void drawStrumBar(Shader ourShader, PlaneShape planeShape, float pos) {
   glm::mat4 model(1.0f);
-
-  if (!planeShape.textured) {
-    model = glm::translate(model, glm::vec3(0.0f, 0.001f, 0.0f)); // move a bit up
-  }
-
   model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos));
-  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -0.5f)); // move origin to bottom
-
-  if (!planeShape.textured) {
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 0.05f)); // shrink in z
-  }
-
+  model = glm::translate(model, glm::vec3(0.0f, 0.001f, 0.0f));
+  model = glm::scale(model, glm::vec3(1.0f, 1.0f, 0.05f)); // shrink in z
   model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-  if (planeShape.textured) {
-    if (thick) {
-      ourShader.setInt("texture2d", 0);
-    } else {
-      ourShader.setInt("texture2d", 1);
-    }
+  ourShader.setMat4("model", model);
+
+  glBindVertexArray(planeShape.VAOPlane);
+  glBindBuffer(GL_ARRAY_BUFFER, planeShape.VBOPlane);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+void drawQuarter(Shader ourShader, PlaneShape planeShape, float pos, bool thick) {
+  glm::mat4 model(1.0f);
+
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos));
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -0.5f)); // origin at bottom
+  model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+  if (thick) {
+    ourShader.setInt("texture2d", 0);
+  } else {
+    ourShader.setInt("texture2d", 1);
   }
 
   ourShader.setMat4("model", model);
