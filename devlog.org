@@ -2,6 +2,18 @@
 ** Use Choro 1906-1947 for menus/loading
 ** Maybe add an illustration as if the songs are playing through a gramophone
 ** Cuphead-like!
+* 2017-04-26 (Day 15)
+** More work on O Ovo
+** Video sync was totally wrong
+** Fixed it
+** Found out msToPos has a bug
+** But happy I fixed the sync issues
+* 2017-04-23 (Day 14)
+** Audio related stuff goes into audio file
+** Synchronized audio and video!
+** Fixed Makefile
+** Added start delay to audio files
+** More work on O Ovo
 * 2017-04-17 (Day 13)
 ** stb_vorbis added for ogg file decoding
 ** Decoder working!
