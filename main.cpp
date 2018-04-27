@@ -24,6 +24,7 @@ const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
 const unsigned int NOTES = 5;
+const float noteHitTreshold = 0.1f;
 
 float currentBPM = 120.0f;
 float seconds_offset = 0.0f;
@@ -98,6 +99,7 @@ int main(int argc, char* args[]) {
 
   glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
 
   Model noteModel("assets/note.obj");
 
@@ -274,6 +276,7 @@ int main(int argc, char* args[]) {
         noteColor = glm::vec4(0xdd / 255.0f, 0x98 / 255.0f, 0x3e / 255.0f, 1.0f);
       }
 
+
       modelShader.setVec4("noteColor", noteColor);
       noteModel.Draw(modelShader);
     }
@@ -283,10 +286,17 @@ int main(int argc, char* args[]) {
     strumBarShader.setMat4("projection", projection);
     drawStrumBar(strumBarShader, strumBarPlaneShape, strumZ);
 
+    for (auto note : gameSong.gameNotes) {
+      if (fabs(note.zPosition - strumZ) < noteHitTreshold) {
+        // cout << note.note << endl;
+        drawNoteHit(strumBarShader, strumBarPlaneShape, strumZ, note.note);
+      }
+    }
+
     // ImGui::SliderFloat("song pos", &strumZ, -1.0f, 30.0f, "%.3f");
     ImGui::SliderFloat("strum bar", &strumBarOffset, -5.0f, 5.0f, "%.3f");
     ImGui::Text("strumZ = %f", strumZ);
-    ImGui::Text("audio  = %f", (float) audio->audioData->pos / 44100);
+    // ImGui::Text("audio  = %f", (float) audio->audioData->pos / 44100);
     ImGui::Text("time   = %d", time);
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                 1000.0f / ImGui::GetIO().Framerate,

@@ -145,6 +145,20 @@ void drawStrumBar(Shader ourShader, PlaneShape planeShape, float pos) {
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
+void drawNoteHit(Shader ourShader, PlaneShape planeShape, float pos, int note) {
+  glm::mat4 model(1.0f);
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, -pos));
+  model = glm::scale(model, glm::vec3(1.0f / 5.0f));
+  model = glm::translate(model, glm::vec3((note - 2), 0.0f, 0.0f));
+  model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
+
+  ourShader.setMat4("model", model);
+
+  glBindVertexArray(planeShape.VAOPlane);
+  glBindBuffer(GL_ARRAY_BUFFER, planeShape.VBOPlane);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
 void drawQuarter(Shader ourShader, PlaneShape planeShape, float pos, bool thick) {
   glm::mat4 model(1.0f);
 

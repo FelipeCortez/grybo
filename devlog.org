@@ -8,6 +8,8 @@
 ** Fixed it
 ** Found out msToPos has a bug
 ** But happy I fixed the sync issues
+** Made notes light up when being "played"
+** Pretty nice to see the effect
 * 2017-04-23 (Day 14)
 ** Audio related stuff goes into audio file
 ** Synchronized audio and video!
