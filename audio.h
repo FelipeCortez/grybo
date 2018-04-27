@@ -1,4 +1,5 @@
 #include <soundio/soundio.h>
+#include <string>
 
 struct AudioData {
   int startDelay;
@@ -15,8 +16,9 @@ struct Audio {
   SoundIoDevice* device;
   SoundIoOutStream* outstream;
   AudioData* audioData;
+  std::string songId;
 
-  Audio();
+  Audio(std::string songId);
   ~Audio();
   bool loadOgg();
 };

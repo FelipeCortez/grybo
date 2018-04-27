@@ -1,3 +1,17 @@
+* Planned songs
+** Sons de Carrilhões (João Pernambuco)
+*** http://enciclopedia.itaucultural.org.br/pessoa19281/joao-pernambuco
+*** Dilermando Reis (https://www.youtube.com/watch?v=_Ac61OaDmHk)
+** Odeon (Ernesto Nazareth - 1909/1912)
+*** https://www.ernestonazareth150anos.com.br/works/view/136
+*** Toquinho + Paulinho Nogueira
+** O Ovo (Hermeto Pascoal e Geraldo Vandré)
+*** http://www.scielo.br/pdf/pm/n22/n22a03.pdf
+*** Fabiano do Nascimento
+** Samba em Prelúdio
+*** Vídeo
+** Choro No 1
+** Se Ela Perguntar?
 * Ideas
 ** Use Choro 1906-1947 for menus/loading
 ** Maybe add an illustration as if the songs are playing through a gramophone

@@ -1,5 +1,8 @@
 #include "audio.h"
 #include "stb_vorbis.h"
+#include <iostream>
+#include <string>
+#include <sstream>
 #include <climits>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,12 +71,12 @@ void callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame
   }
 }
 
-Audio::Audio() {
+Audio::Audio(std::string songId)
+  : songId(songId)
+{
   int err;
 
   audioData = new AudioData();
-
-  // soundio
   soundio = soundio_create();
 
   if (!soundio) {
@@ -123,7 +126,11 @@ Audio::Audio() {
 bool Audio::loadOgg() {
   short *song;
   int channels, len, sampleRate;
-  len = stb_vorbis_decode_filename("assets/ovo.ogg", &channels, &sampleRate, &song);
+
+  std::stringstream fullPath;
+  fullPath << "songs/" << songId << "/" << songId << ".ogg";
+
+  len = stb_vorbis_decode_filename(fullPath.str().c_str(), &channels, &sampleRate, &song);
 
   if (len < 0) {
     return false;

@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+#include <sstream>
 #include <GL/gl3w.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -24,7 +26,7 @@ const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
 const unsigned int NOTES = 5;
-const float noteHitTreshold = 0.1f;
+const float noteHitTreshold = 0.05f;
 
 float currentBPM = 120.0f;
 float seconds_offset = 0.0f;
@@ -34,13 +36,22 @@ double rangeMap(double input, double inputStart, double inputEnd, double outputS
   return outputStart + (slope * (input - inputStart));
 }
 
-int main(int argc, char* args[]) {
+int main(int argc, char* argv[]) {
+  if (argc != 2) {
+    std::cout << "Song name please" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::string songId(argv[1]);
+  std::stringstream fullPath;
+  fullPath << "songs/" << songId << "/" << songId << ".mid";
+  std::cout << fullPath.str() << std::endl;
 
   float strumBarOffset = 1.350f;
-  auto gameSong = getSongFromMidiFile("assets/ovo.mid");
-  cout << "first note: " << gameSong.gameNotes[0].zPosition << endl;
+  auto gameSong = getSongFromMidiFile(fullPath.str());
+  std::cout << "first note: " << gameSong.gameNotes[0].zPosition << std::endl;
 
-  Audio* audio = new Audio();
+  Audio* audio = new Audio(songId);
   audio->audioData->startDelay = gameSong.startDelay;
 
   SDL_Window* window = NULL;
@@ -104,7 +115,7 @@ int main(int argc, char* args[]) {
   Model noteModel("assets/note.obj");
 
   int width, height, nrChannels;
-  unsigned int measureThickTexture, measureThinTexture;
+  unsigned int measureThickTexture, measureThinTexture, noteHitTexture;
 
   glGenTextures(1, &measureThickTexture);
   glBindTexture(GL_TEXTURE_2D, measureThickTexture);
@@ -124,6 +135,8 @@ int main(int argc, char* args[]) {
   }
   stbi_image_free(data);
 
+  // --
+
   glGenTextures(1, &measureThinTexture);
   glBindTexture(GL_TEXTURE_2D, measureThinTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -140,6 +153,27 @@ int main(int argc, char* args[]) {
   }
 
   stbi_image_free(data);
+
+  // --
+
+  glGenTextures(1, &noteHitTexture);
+  glBindTexture(GL_TEXTURE_2D, noteHitTexture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  data = stbi_load("assets/note-hit.png", &width, &height, &nrChannels, 0);
+
+  if (data) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    std::cout << "Failed to load texture" << std::endl;
+  }
+
+  stbi_image_free(data);
+
+  // --
 
   Shader strumBarShader("assets/strum.vert", "assets/strum.frag");
   Shader fretboardShader("assets/fretboard.vert", "assets/fretboard.frag");

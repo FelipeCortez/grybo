@@ -1,4 +1,4 @@
 *.dSYM
 game
-track-projects
+*.logicx
 *.wav
