@@ -10,12 +10,21 @@
 *** Fabiano do Nascimento
 ** Samba em Prelúdio
 *** Vídeo
-** Choro No 1
+** Choro No 1 (Villa-Lobos)
+*** Choro Típico, Toquinho & Paulinho
 ** Se Ela Perguntar?
 * Ideas
 ** Use Choro 1906-1947 for menus/loading
 ** Maybe add an illustration as if the songs are playing through a gramophone
 ** Cuphead-like!
+* 2017-04-29 (Day 18)
+** Song now plays until the end
+* 2017-04-28 (Day 17)
+** Fixed fog in fretboard and model shaders by switching division + clamping to smoothstep. Looks much better already!
+* 2017-04-27 (Day 16)
+** Tempo mapped and started MIDI chart for Samba em Prelúdio
+** Made a template for MIDI charts in Logic
+** Song can be specified via command-line args
 * 2017-04-26 (Day 15)
 ** More work on O Ovo
 ** Video sync was totally wrong

@@ -239,11 +239,13 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    static float fogZ = 1.2f;
+    static float fogZ = 3.5f;
+    static float fogBand = 4.0f;
 
     ImGui_ImplSdlGL3_NewFrame(window);
 
-    ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "ratio = %.3f");
+    ImGui::SliderFloat("fogZ", &fogZ, -5.0f, 5.0f, "%.3f");
+    ImGui::SliderFloat("fogBand", &fogBand, 0.1f, 5.0f, "%.3f");
 
     strumZ = msToPos(time, gameSong);
 
@@ -264,6 +266,7 @@ int main(int argc, char* argv[]) {
     fretboardShader.setMat4("view",  view);
     fretboardShader.setMat4("projection", projection);
     fretboardShader.setFloat("fogZ", fogZ);
+    fretboardShader.setFloat("fogBand", fogBand);
 
     for (i = 0; i < 1000; ++i) {
       drawQuarter(fretboardShader, planeShape, i, (i % 4) == 0);
@@ -273,6 +276,7 @@ int main(int argc, char* argv[]) {
     modelShader.setMat4("view",  view);
     modelShader.setMat4("projection", projection);
     modelShader.setFloat("fogZ", fogZ);
+    modelShader.setFloat("fogBand", fogBand);
 
     const float scaleFactor = 0.08f + upDownValue;
 
