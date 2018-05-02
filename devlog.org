@@ -13,6 +13,7 @@
 ** Choro No 1 (Villa-Lobos)
 *** Choro Típico, Toquinho & Paulinho
 ** Se Ela Perguntar?
+** Choro, Samba, Bossa
 * Ideas
 ** Use Choro 1906-1947 for menus/loading
 ** Maybe add an illustration as if the songs are playing through a gramophone
