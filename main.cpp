@@ -202,6 +202,8 @@ int main(int argc, char* argv[]) {
   float strumZ = 0.0f;
 
   int i;
+  int firstNote = 0;
+  int currentNote = 0;
 
   float notePositions[NOTES] = {0};
 
@@ -280,7 +282,20 @@ int main(int argc, char* argv[]) {
 
     const float scaleFactor = 0.08f + upDownValue;
 
-    for (auto note : gameSong.gameNotes) {
+    // discards past notes
+    while (firstNote < gameSong.gameNotes.size()) {
+      auto& note = gameSong.gameNotes[firstNote];
+      if (note.zPosition > strumZ - strumBarOffset) { break; }
+      ++firstNote;
+    }
+
+    // draws from first note to last in sight
+    currentNote = firstNote;
+    while (currentNote < gameSong.gameNotes.size()) {
+      auto& note = gameSong.gameNotes[currentNote];
+
+      if (note.zPosition > strumZ + fogZ + fogBand) { break; }
+
       glm::mat4 model(1.0f);
       model = glm::translate(model, glm::vec3(notePositions[note.note],
                                               0.0f,
@@ -317,6 +332,8 @@ int main(int argc, char* argv[]) {
 
       modelShader.setVec4("noteColor", noteColor);
       noteModel.Draw(modelShader);
+
+      ++currentNote;
     }
 
     strumBarShader.use();
