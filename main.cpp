@@ -58,6 +58,7 @@ int main(int argc, char* argv[]) {
 
   if (SDL_Init(SDL_INIT_VIDEO  |
                SDL_INIT_EVENTS |
+               SDL_INIT_JOYSTICK |
                SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
     return 1;
@@ -196,12 +197,25 @@ int main(int argc, char* argv[]) {
   const Uint8* keys = NULL;
   keys = SDL_GetKeyboardState(NULL);
 
+  SDL_GameController *ctrl;
+  SDL_Joystick *joy;
+  int i;
+
+  for(i = 0; i < SDL_NumJoysticks(); ++i) {
+    if (SDL_IsGameController(i)) {
+      printf("Index \'%i\' is a compatible controller, named \'%s\'\n", i, SDL_GameControllerNameForIndex(i));
+      ctrl = SDL_GameControllerOpen(i);
+      joy = SDL_GameControllerGetJoystick(ctrl);
+    } else {
+      printf("Index \'%i\' is not a compatible controller.\n", i);
+    }
+  }
+
   // game stuff
   float upDownValue = 0.0f;
   float sidesValue = 0.0f;
   float strumZ = 0.0f;
 
-  int i;
   int firstNote = 0;
   int currentNote = 0;
 
@@ -219,7 +233,11 @@ int main(int argc, char* argv[]) {
     while (SDL_PollEvent(&e)) {
       ImGui_ImplSdlGL3_ProcessEvent(&e);
 
-      if (e.type == SDL_KEYDOWN) {
+      if (e.type == SDL_JOYAXISMOTION) {
+        // std::cout << "hmm" << std::endl;
+      } else if (e.type == SDL_JOYBUTTONDOWN) {
+        std::cout << "yay" << std::endl;
+      } else if (e.type == SDL_KEYDOWN) {
         switch(e.key.keysym.sym) {
         case SDLK_UP:
           upDownValue += UPDOWN_INCREMENT;
