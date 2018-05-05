@@ -26,7 +26,7 @@ const unsigned int SCREEN_HEIGHT = 600;
 const float SIDES_INCREMENT = 0.005f;
 const float UPDOWN_INCREMENT = 0.005f;
 const unsigned int NOTES = 5;
-const float noteHitTreshold = 0.05f;
+const float noteHitTreshold = 0.5f;
 
 enum class JoyButton {
   SELECT = 0,
@@ -240,6 +240,7 @@ int main(int argc, char* argv[]) {
   int currentNote = 0;
 
   float notePositions[NOTES] = {0};
+  float noteHit[NOTES] = {0};
 
   for (i = 0; i < NOTES; ++i) {
     notePositions[i] = rangeMap(i, 0.0f, NOTES - 1, -0.39f, 0.39f);
@@ -250,34 +251,61 @@ int main(int argc, char* argv[]) {
     time = SDL_GetTicks();
     dt = (time - pastTime) / 1000.0f;
 
+    for (i = 0; i < NOTES; ++i) { noteHit[i] = 0; }
+
     while (SDL_PollEvent(&e)) {
       ImGui_ImplSdlGL3_ProcessEvent(&e);
 
       if (e.type == SDL_JOYAXISMOTION) {
-        // std::cout << "hmm" << std::endl;
+        // do nothing!
       } else if (e.type == SDL_JOYBUTTONDOWN) {
-        switch(static_cast<JoyButton>(e.jbutton.button)) {
+        switch (static_cast<JoyButton>(e.jbutton.button)) {
         case JoyButton::LT:
-          std::cout << "I'm so green" << std::endl;
+          // std::cout << "I'm so green" << std::endl;
+          for (auto note : gameSong.gameNotes) {
+            if (fabs(note.zPosition - strumZ) < noteHitTreshold && note.note == 0) {
+              noteHit[0] = 1;
+            }
+          }
           break;
         case JoyButton::LB:
-          std::cout << "simply red" << std::endl;
+          // std::cout << "simply red" << std::endl;
+          for (auto note : gameSong.gameNotes) {
+            if (fabs(note.zPosition - strumZ) < noteHitTreshold && note.note == 1) {
+              noteHit[1] = 1;
+            }
+          }
           break;
         case JoyButton::RB:
-          std::cout << "yellow sub" << std::endl;
+          // std::cout << "yellow sub" << std::endl;
+          for (auto note : gameSong.gameNotes) {
+            if (fabs(note.zPosition - strumZ) < noteHitTreshold && note.note == 2) {
+              noteHit[2] = 1;
+            }
+          }
           break;
         case JoyButton::RT:
-          std::cout << "kind of blue" << std::endl;
+          // std::cout << "kind of blue" << std::endl;
+          for (auto note : gameSong.gameNotes) {
+            if (fabs(note.zPosition - strumZ) < noteHitTreshold && note.note == 3) {
+              noteHit[3] = 1;
+            }
+          }
           break;
         case JoyButton::CROSS:
-          std::cout << "orange amps" << std::endl;
+          // std::cout << "orange amps" << std::endl;
+          for (auto note : gameSong.gameNotes) {
+            if (fabs(note.zPosition - strumZ) < noteHitTreshold && note.note == 4) {
+              noteHit[4] = 1;
+            }
+          }
           break;
         default:
-          std::cout << "other" << std::endl;
+          // std::cout << "other" << std::endl;
           break;
         }
       } else if (e.type == SDL_KEYDOWN) {
-        switch(e.key.keysym.sym) {
+        switch (e.key.keysym.sym) {
         case SDLK_UP:
           upDownValue += UPDOWN_INCREMENT;
           break;
@@ -386,7 +414,6 @@ int main(int argc, char* argv[]) {
         noteColor = glm::vec4(0xdd / 255.0f, 0x98 / 255.0f, 0x3e / 255.0f, 1.0f);
       }
 
-
       modelShader.setVec4("noteColor", noteColor);
       noteModel.Draw(modelShader);
 
@@ -398,17 +425,16 @@ int main(int argc, char* argv[]) {
     strumBarShader.setMat4("projection", projection);
     drawStrumBar(strumBarShader, strumBarPlaneShape, strumZ);
 
-    for (auto note : gameSong.gameNotes) {
-      if (fabs(note.zPosition - strumZ) < noteHitTreshold) {
-        // cout << note.note << endl;
-        drawNoteHit(strumBarShader, strumBarPlaneShape, strumZ, note.note);
+    for (i = 0; i < NOTES; ++i) {
+      if (noteHit[i]) {
+        drawNoteHit(strumBarShader, strumBarPlaneShape, strumZ, i);
       }
     }
 
     // ImGui::SliderFloat("song pos", &strumZ, -1.0f, 30.0f, "%.3f");
     ImGui::SliderFloat("strum bar", &strumBarOffset, -5.0f, 5.0f, "%.3f");
     ImGui::Text("strumZ = %f", strumZ);
-    // ImGui::Text("audio  = %f", (float) audio->audioData->pos / 44100);
+    ImGui::Text("audio  = %f", (float) audio->audioData->pos / 44100);
     ImGui::Text("time   = %d", time);
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                 1000.0f / ImGui::GetIO().Framerate,
