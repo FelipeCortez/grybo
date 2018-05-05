@@ -28,6 +28,26 @@ const float UPDOWN_INCREMENT = 0.005f;
 const unsigned int NOTES = 5;
 const float noteHitTreshold = 0.05f;
 
+enum class JoyButton {
+  SELECT = 0,
+  L3,
+  R3,
+  START,
+  UP,
+  RIGHT,
+  DOWN,
+  LEFT,
+  LT,
+  RT,
+  LB,
+  RB,
+  TRIANGLE,
+  CIRCLE,
+  CROSS,
+  SQUARE,
+  LOGO
+};
+
 float currentBPM = 120.0f;
 float seconds_offset = 0.0f;
 
@@ -236,7 +256,26 @@ int main(int argc, char* argv[]) {
       if (e.type == SDL_JOYAXISMOTION) {
         // std::cout << "hmm" << std::endl;
       } else if (e.type == SDL_JOYBUTTONDOWN) {
-        std::cout << "yay" << std::endl;
+        switch(static_cast<JoyButton>(e.jbutton.button)) {
+        case JoyButton::LT:
+          std::cout << "I'm so green" << std::endl;
+          break;
+        case JoyButton::LB:
+          std::cout << "simply red" << std::endl;
+          break;
+        case JoyButton::RB:
+          std::cout << "yellow sub" << std::endl;
+          break;
+        case JoyButton::RT:
+          std::cout << "kind of blue" << std::endl;
+          break;
+        case JoyButton::CROSS:
+          std::cout << "orange amps" << std::endl;
+          break;
+        default:
+          std::cout << "other" << std::endl;
+          break;
+        }
       } else if (e.type == SDL_KEYDOWN) {
         switch(e.key.keysym.sym) {
         case SDLK_UP:
