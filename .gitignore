@@ -1,7 +1,6 @@
 .DS_Store
 **.dSYM
-game
 **.logicx
 **.wav
 **.o
-
+bin
